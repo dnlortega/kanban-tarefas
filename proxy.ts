@@ -2,9 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 
+const PUBLIC_PATHS = ["/login", "/jukebox/pedir"];
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (pathname === "/login") {
+  if (PUBLIC_PATHS.includes(pathname)) {
     return NextResponse.next();
   }
 
