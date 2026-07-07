@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
@@ -34,6 +35,9 @@ export function ColumnManager({ initialColumns }: ColumnManagerProps) {
   const [, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Column | null>(null);
+  const [columnToDelete, setColumnToDelete] = useState<
+    (Column & { taskCount: number }) | null
+  >(null);
 
   function handleMove(id: string, direction: "up" | "down") {
     const index = columns.findIndex((c) => c.id === id);
@@ -49,13 +53,19 @@ export function ColumnManager({ initialColumns }: ColumnManagerProps) {
     });
   }
 
-  function handleDelete(column: Column & { taskCount: number }) {
+  function requestDelete(column: Column & { taskCount: number }) {
     if (column.taskCount > 0) {
       toast.error(
         "Mova ou exclua as tarefas dessa coluna antes de removê-la."
       );
       return;
     }
+    setColumnToDelete(column);
+  }
+
+  function confirmDeleteColumn() {
+    if (!columnToDelete) return;
+    const column = columnToDelete;
     setColumns((prev) => prev.filter((c) => c.id !== column.id));
     startTransition(() => {
       deleteColumn(column.id)
@@ -178,7 +188,7 @@ export function ColumnManager({ initialColumns }: ColumnManagerProps) {
                     size="icon-sm"
                     variant="ghost"
                     aria-label="Excluir coluna"
-                    onClick={() => handleDelete(column)}
+                    onClick={() => requestDelete(column)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -283,7 +293,7 @@ export function ColumnManager({ initialColumns }: ColumnManagerProps) {
                       size="icon-sm"
                       variant="ghost"
                       aria-label="Excluir coluna"
-                      onClick={() => handleDelete(column)}
+                      onClick={() => requestDelete(column)}
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -307,6 +317,19 @@ export function ColumnManager({ initialColumns }: ColumnManagerProps) {
         onOpenChange={setDialogOpen}
         column={editing}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDialog
+        open={columnToDelete !== null}
+        onOpenChange={(open) => !open && setColumnToDelete(null)}
+        title="Excluir coluna"
+        description={
+          columnToDelete
+            ? `Tem certeza que deseja excluir a coluna "${columnToDelete.title}"? Essa ação não pode ser desfeita.`
+            : ""
+        }
+        confirmLabel="Excluir"
+        onConfirm={confirmDeleteColumn}
       />
     </>
   );

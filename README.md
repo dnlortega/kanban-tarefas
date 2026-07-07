@@ -86,6 +86,16 @@ npm run dev
 
 Acesse [http://localhost:3000](http://localhost:3000).
 
+### 5. Acessar de outros dispositivos na mesma rede (opcional)
+
+Útil para o Jukebox: uma tela (TV/PC) tocando e outro dispositivo (celular) pedindo música.
+
+`npm run dev`/`npm run start` já ficam disponíveis em todas as interfaces de rede (`-H 0.0.0.0`), não só em `localhost`. Para acessar de outro dispositivo na mesma Wi-Fi:
+
+1. Descubra o IP local desta máquina: no Windows, `ipconfig` (procure "Endereço IPv4", algo como `192.168.x.x`).
+2. No outro dispositivo, acesse `http://SEU_IP:3000` (ex: `http://192.168.1.10:3000`).
+3. Se não conectar, o Firewall do Windows pode estar bloqueando. Ao rodar `npm run dev` pela primeira vez, o Windows deve perguntar se permite o Node.js na rede — escolha "Permitir acesso". Se não perguntar, libere manualmente em *Painel de Controle → Firewall do Windows Defender → Permitir um aplicativo* (ou crie uma regra para a porta 3000/TCP).
+
 ## Scripts
 
 | Comando | Descrição |

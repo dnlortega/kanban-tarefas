@@ -23,6 +23,7 @@ import { TaskCard } from "@/components/kanban/task-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { StatsBar } from "@/components/kanban/stats-bar";
 import { EmailSummaryButton } from "@/components/kanban/email-summary-button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -48,6 +49,10 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [dialogColumnId, setDialogColumnId] = useState(columns[0]?.id ?? "");
+  const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
+  const taskToDelete = taskToDeleteId
+    ? columns.flatMap((c) => c.tasks).find((t) => t.id === taskToDeleteId) ?? null
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -231,7 +236,13 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
     }
   }
 
-  const handleDelete = useCallback((id: string) => {
+  const requestDelete = useCallback((id: string) => {
+    setTaskToDeleteId(id);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    const id = taskToDeleteId;
+    if (!id) return;
     setColumns((prev) => {
       const columnId = prev.find((c) => c.tasks.some((t) => t.id === id))?.id;
       if (!columnId) return prev;
@@ -245,7 +256,7 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
       deleteTask(id).catch(() => toast.error("Erro ao excluir tarefa"));
     });
     toast("Tarefa excluída");
-  }, []);
+  }, [taskToDeleteId]);
 
   return (
     <>
@@ -316,7 +327,7 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
                 tasks={col.tasks}
                 onAddTask={openCreateDialog}
                 onEditTask={openEditDialog}
-                onDeleteTask={handleDelete}
+                onDeleteTask={requestDelete}
               />
             ))}
             {columns.length === 0 && (
@@ -366,6 +377,19 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
         columns={columns}
         titleSuggestions={titleSuggestions}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDialog
+        open={taskToDeleteId !== null}
+        onOpenChange={(open) => !open && setTaskToDeleteId(null)}
+        title="Excluir tarefa"
+        description={
+          taskToDelete
+            ? `Tem certeza que deseja excluir "${taskToDelete.title}"? Essa ação não pode ser desfeita.`
+            : ""
+        }
+        confirmLabel="Excluir"
+        onConfirm={confirmDelete}
       />
     </>
   );

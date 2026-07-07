@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { getQueueState, requestTrack, searchTracks } from "@/lib/actions/jukebox";
+import {
+  getQueueState,
+  removeFromQueue,
+  requestTrack,
+  searchTracks,
+} from "@/lib/actions/jukebox";
 import type { Track, YoutubeSearchResultWithBlock } from "@/types/jukebox";
 
 interface RequestFormProps {
@@ -49,6 +54,11 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
         toast.error(err instanceof Error ? err.message : "Erro ao buscar.");
       }
     });
+  }
+
+  async function handleRemove(id: string) {
+    setQueue((q) => q.filter((t) => t.id !== id));
+    await removeFromQueue(id).catch(() => toast.error("Erro ao remover da fila"));
   }
 
   async function handleRequest(result: YoutubeSearchResultWithBlock) {
@@ -173,7 +183,22 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
               className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
             >
               <span className="text-xs text-muted-foreground">{index + 1}</span>
-              <span className="truncate">{track.title}</span>
+              <span className="min-w-0 flex-1 truncate">{track.title}</span>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Remover da fila"
+                      onClick={() => handleRemove(track.id)}
+                    />
+                  }
+                >
+                  <Trash2 className="size-3.5" />
+                </TooltipTrigger>
+                <TooltipContent>Remover da fila</TooltipContent>
+              </Tooltip>
             </div>
           ))}
           {queue.length === 0 && (
