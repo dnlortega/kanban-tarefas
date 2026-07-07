@@ -1,11 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Logo } from "@/components/logo";
 import { allNav } from "@/lib/nav";
+import { logout } from "@/lib/actions/auth";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -22,6 +26,18 @@ export function AppHeader() {
           {current?.title ?? "Central de Tarefas & Jukebox"}
         </span>
       </div>
+      <form action={logout} className="ml-auto">
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button type="submit" variant="ghost" size="icon" aria-label="Sair" />
+            }
+          >
+            <LogOut className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>Sair</TooltipContent>
+        </Tooltip>
+      </form>
     </header>
   );
 }

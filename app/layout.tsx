@@ -5,10 +5,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
-import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,14 +40,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider delay={200}>
-            <SidebarProvider>
-              <AppSidebar />
-              <SidebarInset>
-                <AppHeader />
-                <div className="flex flex-1 flex-col pb-14 md:pb-0">{children}</div>
-              </SidebarInset>
-            </SidebarProvider>
-            <MobileBottomNav />
+            {children}
             <Toaster richColors position="bottom-right" />
           </TooltipProvider>
         </ThemeProvider>

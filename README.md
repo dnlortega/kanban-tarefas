@@ -24,7 +24,7 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 - Avatar com iniciais do responsável e indicador visual de tarefa atrasada
 - Mini-dashboard: total de tarefas, concluídas e atrasadas
 - Botão para enviar um resumo das tarefas concluídas por e-mail (abre o cliente de e-mail padrão)
-- Persistência 100% em banco de dados (SQLite via Prisma), sem `localStorage`
+- Persistência 100% em banco de dados (PostgreSQL via Prisma), sem `localStorage`
 
 ### Administração de colunas (`/admin`)
 
@@ -40,6 +40,7 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 
 ### Geral
 
+- Login com senha única compartilhada (`APP_PASSWORD`) protegendo todo o sistema
 - Sidebar de navegação no desktop; barra de navegação inferior (ícones) no mobile
 - Dark mode
 - Design responsivo para desktop e mobile
@@ -69,6 +70,12 @@ YOUTUBE_API_KEY=sua_chave_aqui
 ```
 
 Veja o passo a passo em [docs/youtube-api-key.md](docs/youtube-api-key.md). Sem a chave, o restante do sistema (Kanban, admin, player, bloqueios) funciona normalmente — só a busca por nome fica indisponível.
+
+Defina também `APP_PASSWORD` — a senha única para acessar o sistema (protege todas as rotas via `middleware.ts`). Se deixar em branco, o sistema fica sem proteção nenhuma.
+
+```
+APP_PASSWORD=sua_senha_aqui
+```
 
 ### 3. Rodar migrations e seed
 
@@ -100,7 +107,7 @@ Acesse [http://localhost:3000](http://localhost:3000).
 
 1. Importe o repositório em [vercel.com/new](https://vercel.com/new).
 2. Crie um banco Postgres em **Storage → Create Database → Postgres** — a Vercel já injeta `DATABASE_URL` automaticamente no projeto.
-3. Em **Settings → Environment Variables**, adicione `YOUTUBE_API_KEY` (a `DATABASE_URL` já vem do passo 2).
+3. Em **Settings → Environment Variables**, adicione `YOUTUBE_API_KEY` e `APP_PASSWORD` (a `DATABASE_URL` já vem do passo 2).
 4. Rode `npx prisma migrate deploy` localmente apontando para essa mesma `DATABASE_URL` (ou configure como build step) para aplicar as migrations no banco de produção antes do primeiro deploy.
 5. O `postinstall` (`prisma generate`) já roda automaticamente no build da Vercel.
 
@@ -119,16 +126,21 @@ Acesse [http://localhost:3000](http://localhost:3000).
 
 ```
 app/
-  page.tsx                  Quadro Kanban (Server Component)
-  admin/                    Administração de colunas
-  jukebox/                  Player, pedido de música e bloqueios
+  (app)/                    Rotas protegidas (com sidebar/header)
+    page.tsx                Quadro Kanban (Server Component)
+    admin/                  Administração de colunas
+    jukebox/                Player, pedido de música e bloqueios
+  login/                    Página de login (sem sidebar)
+  layout.tsx                Layout raiz (tema, toaster)
+middleware.ts                Bloqueia acesso sem cookie de sessão válido
 components/
   kanban/                   Board, colunas, cards, dialogs, stats
   admin/                    Gerenciador de colunas
   jukebox/                  Player, formulário de pedido, bloqueios
   ui/                       Componentes shadcn/ui
 lib/
-  actions/                  Server Actions (tasks, columns, jukebox, blocklist)
+  actions/                  Server Actions (tasks, columns, jukebox, blocklist, auth)
+  auth.ts                   Hash da senha (Web Crypto)
   prisma.ts                 Cliente Prisma (singleton)
   youtube.ts                Integração com YouTube Data API v3
   nav.ts                    Itens de navegação (sidebar + bottom nav)
