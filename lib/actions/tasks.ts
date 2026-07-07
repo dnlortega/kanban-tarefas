@@ -139,6 +139,50 @@ export async function getAssignableTasks(): Promise<AssignableTask[]> {
   }));
 }
 
+export interface CalendarTask {
+  id: string;
+  title: string;
+  dueDate: string;
+  columnTitle: string;
+  columnColor: string;
+  isDoneColumn: boolean;
+  assignee: { id: string; name: string } | null;
+}
+
+export async function getTasksForMonth(year: number, month: number): Promise<CalendarTask[]> {
+  const start = new Date(Date.UTC(year, month, 1));
+  const end = new Date(Date.UTC(year, month + 1, 1));
+
+  const tasks = await prisma.task.findMany({
+    where: { dueDate: { gte: start, lt: end } },
+    include: {
+      assignee: { select: { id: true, name: true } },
+      column: { select: { title: true, color: true, isDone: true } },
+    },
+    orderBy: { dueDate: "asc" },
+  });
+
+  return tasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    dueDate: task.dueDate!.toISOString(),
+    columnTitle: task.column.title,
+    columnColor: task.column.color,
+    isDoneColumn: task.column.isDone,
+    assignee: task.assignee,
+  }));
+}
+
+export async function updateTaskDueDate(taskId: string, dueDate: string) {
+  await requireCoordinator();
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { dueDate: new Date(dueDate) },
+  });
+  revalidatePath("/calendario");
+  revalidatePath("/");
+}
+
 interface ColumnOrderPayload {
   columnId: string;
   taskIds: string[];
