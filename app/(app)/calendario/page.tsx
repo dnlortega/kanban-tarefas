@@ -21,14 +21,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-background">
-      <div className="border-b px-4 py-4 sm:px-6">
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Calendário</h1>
-        <p className="text-sm text-muted-foreground">
-          Tarefas com prazo em cada dia do mês.
-          {currentUser?.role === "coordinator" &&
-            " Arraste uma tarefa para outro dia para mudar o prazo."}
-        </p>
-      </div>
       <MonthCalendar
         year={year}
         month={month}
