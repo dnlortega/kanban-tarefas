@@ -6,19 +6,21 @@ export interface NavItem {
   href: string;
   icon: LucideIcon;
   coordinatorOnly?: boolean;
+  /** Shown directly in the mobile bottom nav; everything else goes in "Mais". */
+  primary?: boolean;
 }
 
 export const boardNav: NavItem[] = [
-  { title: "Quadro Kanban", href: "/", icon: KanbanSquare },
-  { title: "Calendário", href: "/calendario", icon: Calendar },
+  { title: "Quadro Kanban", href: "/", icon: KanbanSquare, primary: true },
+  { title: "Calendário", href: "/calendario", icon: Calendar, primary: true },
   { title: "Atribuir tarefas", href: "/atribuir", icon: Send, coordinatorOnly: true },
   { title: "Administração", href: "/admin", icon: Settings, coordinatorOnly: true },
   { title: "Usuários", href: "/admin/usuarios", icon: Users, coordinatorOnly: true },
 ];
 
 export const jukeboxNav: NavItem[] = [
-  { title: "Tocando agora", href: "/jukebox", icon: Radio },
-  { title: "Pedir música", href: "/jukebox/pedir", icon: ListMusic },
+  { title: "Tocando agora", href: "/jukebox", icon: Radio, primary: true },
+  { title: "Pedir música", href: "/jukebox/pedir", icon: ListMusic, primary: true },
   { title: "Bloqueios", href: "/jukebox/bloqueios", icon: Ban },
 ];
 
