@@ -9,9 +9,10 @@ test.describe("Autenticação", () => {
 
   test("mostra erro com senha incorreta", async ({ page }) => {
     await page.goto("/login");
+    await page.fill("#username", "coordenador");
     await page.fill("#password", "senha-errada-de-teste");
     await page.click('button[aria-label="Entrar"]');
-    await expect(page.locator("text=Senha incorreta")).toBeVisible();
+    await expect(page.locator("text=Usuário ou senha incorretos")).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
   });
 

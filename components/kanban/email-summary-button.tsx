@@ -25,7 +25,7 @@ export function EmailSummaryButton({ columns }: EmailSummaryButtonProps) {
     const subject = `Tarefas concluídas (${completedTasks.length})`;
     const lines = completedTasks.map((task, index) => {
       const parts = [`${index + 1}. ${task.title}`];
-      if (task.assignee) parts.push(`Responsável: ${task.assignee}`);
+      if (task.assignee) parts.push(`Responsável: ${task.assignee.name}`);
       if (task.description) parts.push(`Descrição: ${task.description}`);
       parts.push(`Concluída em: ${formatDate(task.updatedAt)}`);
       return parts.join("\n   ");

@@ -22,6 +22,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: LucideIcon;
+  coordinatorOnly?: boolean;
 }
 
 interface NavGroupProps {
@@ -54,8 +55,13 @@ function NavGroup({ label, items, pathname }: NavGroupProps) {
   );
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isCoordinator: boolean;
+}
+
+export function AppSidebar({ isCoordinator }: AppSidebarProps) {
   const pathname = usePathname();
+  const visibleBoardNav = boardNav.filter((item) => !item.coordinatorOnly || isCoordinator);
 
   return (
     <Sidebar collapsible="icon" className="hidden md:flex">
@@ -68,7 +74,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavGroup label="Tarefas" items={boardNav} pathname={pathname} />
+        <NavGroup label="Tarefas" items={visibleBoardNav} pathname={pathname} />
         <NavGroup label="Jukebox" items={jukeboxNav} pathname={pathname} />
       </SidebarContent>
     </Sidebar>

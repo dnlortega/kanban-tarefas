@@ -18,6 +18,7 @@ interface TaskCardProps {
   onDelete: (id: string) => void;
   overlay?: boolean;
   dragDisabled?: boolean;
+  canManage?: boolean;
 }
 
 function TaskCardImpl({
@@ -27,6 +28,7 @@ function TaskCardImpl({
   onDelete,
   overlay,
   dragDisabled,
+  canManage = true,
 }: TaskCardProps) {
   const {
     setNodeRef,
@@ -89,9 +91,9 @@ function TaskCardImpl({
             <div className="mt-2 flex items-center gap-2">
               {task.assignee && (
                 <div className="flex items-center gap-1">
-                  <TaskAvatar name={task.assignee} />
+                  <TaskAvatar name={task.assignee.name} />
                   <span className="text-xs text-muted-foreground">
-                    {task.assignee}
+                    {task.assignee.name}
                   </span>
                 </div>
               )}
@@ -112,26 +114,28 @@ function TaskCardImpl({
           )}
         </div>
 
-        <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            aria-label="Editar tarefa"
-            onClick={() => onEdit(task)}
-          >
-            <Pencil className="size-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            aria-label="Excluir tarefa"
-            onClick={() => onDelete(task.id)}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        </div>
+        {canManage && (
+          <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Editar tarefa"
+              onClick={() => onEdit(task)}
+            >
+              <Pencil className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Excluir tarefa"
+              onClick={() => onDelete(task.id)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

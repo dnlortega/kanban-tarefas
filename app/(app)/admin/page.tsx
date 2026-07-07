@@ -1,10 +1,18 @@
+import { redirect } from "next/navigation";
+
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/session";
 import { ColumnManager } from "@/components/admin/column-manager";
 import type { Column } from "@/types/task";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  const currentUser = await getCurrentUser();
+  if (!currentUser || currentUser.role !== "coordinator") {
+    redirect("/");
+  }
+
   const columns = await prisma.column.findMany({
     orderBy: { order: "asc" },
     include: { _count: { select: { tasks: true } } },

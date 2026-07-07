@@ -11,7 +11,11 @@ import { Logo } from "@/components/logo";
 import { allNav } from "@/lib/nav";
 import { logout } from "@/lib/actions/auth";
 
-export function AppHeader() {
+interface AppHeaderProps {
+  userName: string;
+}
+
+export function AppHeader({ userName }: AppHeaderProps) {
   const pathname = usePathname();
   const current = allNav.find((item) => item.href === pathname);
 
@@ -26,7 +30,8 @@ export function AppHeader() {
           {current?.title ?? "Central de Tarefas & Jukebox"}
         </span>
       </div>
-      <form action={logout} className="ml-auto">
+      <span className="ml-auto hidden text-sm text-muted-foreground sm:inline">{userName}</span>
+      <form action={logout}>
         <Tooltip>
           <TooltipTrigger
             render={

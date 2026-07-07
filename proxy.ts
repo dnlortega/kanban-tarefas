@@ -1,22 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { AUTH_COOKIE_NAME, hashSecret } from "@/lib/auth";
+import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 
 export async function proxy(request: NextRequest) {
-  const password = process.env.APP_PASSWORD;
-  if (!password) {
-    return NextResponse.next();
-  }
-
   const { pathname } = request.nextUrl;
   if (pathname === "/login") {
     return NextResponse.next();
   }
 
   const cookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-  const expected = await hashSecret(password);
+  const session = await verifySessionToken(cookie);
 
-  if (cookie === expected) {
+  if (session) {
     return NextResponse.next();
   }
 

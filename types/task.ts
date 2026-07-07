@@ -6,11 +6,16 @@ export interface Column {
   order: number;
 }
 
+export interface TaskAssignee {
+  id: string;
+  name: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   description: string | null;
-  assignee: string | null;
+  assignee: TaskAssignee | null;
   dueDate: string | null;
   order: number;
   columnId: string;
@@ -25,7 +30,7 @@ export interface ColumnWithTasks extends Column {
 export interface TaskInput {
   title: string;
   description?: string;
-  assignee?: string;
+  assigneeId?: string;
   dueDate?: string;
   columnId: string;
 }

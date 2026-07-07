@@ -1,14 +1,16 @@
 import type { Page } from "@playwright/test";
 
-export async function login(page: Page) {
-  const password = process.env.APP_PASSWORD;
-  if (!password) {
-    throw new Error(
-      "APP_PASSWORD não está definido no ambiente. Configure .env antes de rodar os testes."
-    );
-  }
+export async function login(
+  page: Page,
+  { username = "coordenador", password = "coord12345" }: { username?: string; password?: string } = {}
+) {
   await page.goto("/login");
+  await page.fill("#username", username);
   await page.fill("#password", password);
   await page.click('button[aria-label="Entrar"]');
   await page.waitForURL((url) => !url.pathname.includes("/login"));
+}
+
+export async function loginAsMember(page: Page) {
+  return login(page, { username: "membro", password: "membro12345" });
 }

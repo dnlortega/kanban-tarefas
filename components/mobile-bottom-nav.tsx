@@ -6,12 +6,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { allNav } from "@/lib/nav";
 
-export function MobileBottomNav() {
+interface MobileBottomNavProps {
+  isCoordinator: boolean;
+}
+
+export function MobileBottomNav({ isCoordinator }: MobileBottomNavProps) {
   const pathname = usePathname();
+  const visibleNav = allNav.filter((item) => !item.coordinatorOnly || isCoordinator);
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-around border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
-      {allNav.map((item) => {
+      {visibleNav.map((item) => {
         const isActive = pathname === item.href;
         return (
           <Link

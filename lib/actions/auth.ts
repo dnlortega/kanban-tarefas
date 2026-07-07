@@ -4,7 +4,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { AUTH_COOKIE_NAME, hashSecret } from "@/lib/auth";
+import { AUTH_COOKIE_NAME, createSessionToken } from "@/lib/auth";
+import { verifyPassword } from "@/lib/password";
 
 export interface LoginState {
   error?: string;
@@ -23,13 +24,9 @@ export async function login(
   _prevState: LoginState | undefined,
   formData: FormData
 ): Promise<LoginState | undefined> {
+  const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const from = String(formData.get("from") ?? "/");
-
-  const expected = process.env.APP_PASSWORD;
-  if (!expected) {
-    redirect(from);
-  }
 
   const ip = await getClientIp();
   const windowStart = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000);
@@ -44,14 +41,17 @@ export async function login(
     };
   }
 
-  if (password !== expected) {
+  const user = await prisma.user.findUnique({ where: { username } });
+  const valid = user ? await verifyPassword(password, user.passwordHash) : false;
+
+  if (!user || !valid) {
     await prisma.loginAttempt.create({ data: { ip, success: false } });
-    return { error: "Senha incorreta" };
+    return { error: "Usuário ou senha incorretos" };
   }
 
   await prisma.loginAttempt.create({ data: { ip, success: true } });
 
-  const token = await hashSecret(expected);
+  const token = await createSessionToken({ userId: user.id });
   (await cookies()).set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

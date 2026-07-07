@@ -3,12 +3,18 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, requireCoordinator } from "@/lib/session";
 import type { ColumnWithTasks, TaskInput } from "@/types/task";
 
 export async function getBoardState(): Promise<ColumnWithTasks[]> {
   const columns = await prisma.column.findMany({
     orderBy: { order: "asc" },
-    include: { tasks: { orderBy: { order: "asc" } } },
+    include: {
+      tasks: {
+        orderBy: { order: "asc" },
+        include: { assignee: { select: { id: true, name: true } } },
+      },
+    },
   });
 
   return columns.map((col) => ({
@@ -32,6 +38,8 @@ export async function getBoardState(): Promise<ColumnWithTasks[]> {
 }
 
 export async function createTask(input: TaskInput) {
+  await requireCoordinator();
+
   const last = await prisma.task.findFirst({
     where: { columnId: input.columnId },
     orderBy: { order: "desc" },
@@ -41,7 +49,7 @@ export async function createTask(input: TaskInput) {
     data: {
       title: input.title,
       description: input.description || null,
-      assignee: input.assignee || null,
+      assigneeId: input.assigneeId || null,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
       columnId: input.columnId,
       order: last ? last.order + 1 : 0,
@@ -52,6 +60,8 @@ export async function createTask(input: TaskInput) {
 }
 
 export async function updateTask(id: string, input: TaskInput) {
+  await requireCoordinator();
+
   const existing = await prisma.task.findUniqueOrThrow({ where: { id } });
 
   let order = existing.order;
@@ -68,7 +78,7 @@ export async function updateTask(id: string, input: TaskInput) {
     data: {
       title: input.title,
       description: input.description || null,
-      assignee: input.assignee || null,
+      assigneeId: input.assigneeId || null,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
       columnId: input.columnId,
       order,
@@ -79,6 +89,7 @@ export async function updateTask(id: string, input: TaskInput) {
 }
 
 export async function deleteTask(id: string) {
+  await requireCoordinator();
   await prisma.task.delete({ where: { id } });
   revalidatePath("/");
 }
@@ -89,6 +100,29 @@ interface ColumnOrderPayload {
 }
 
 export async function syncColumnsOrder(payload: ColumnOrderPayload[]) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Não autenticado");
+
+  if (user.role !== "coordinator") {
+    const allTaskIds = payload.flatMap((p) => p.taskIds);
+    const tasks = await prisma.task.findMany({
+      where: { id: { in: allTaskIds } },
+      select: { id: true, columnId: true, assigneeId: true },
+    });
+    const taskById = new Map(tasks.map((t) => [t.id, t]));
+
+    for (const { columnId, taskIds } of payload) {
+      for (const taskId of taskIds) {
+        const task = taskById.get(taskId);
+        if (!task) continue;
+        const isMoving = task.columnId !== columnId;
+        if (isMoving && task.assigneeId !== user.id) {
+          throw new Error("Você só pode mover as suas próprias tarefas.");
+        }
+      }
+    }
+  }
+
   await prisma.$transaction(
     payload.flatMap(({ columnId, taskIds }) =>
       taskIds.map((id, index) =>

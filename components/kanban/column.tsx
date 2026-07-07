@@ -15,6 +15,8 @@ interface ColumnProps {
   tasks: Task[];
   totalCount: number;
   dragDisabled?: boolean;
+  isCoordinator: boolean;
+  currentUserId: string;
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
@@ -25,6 +27,8 @@ function ColumnImpl({
   tasks,
   totalCount,
   dragDisabled,
+  isCoordinator,
+  currentUserId,
   onAddTask,
   onEditTask,
   onDeleteTask,
@@ -59,15 +63,17 @@ function ColumnImpl({
             {isFiltered ? `${tasks.length}/${totalCount}` : totalCount}
           </span>
         </div>
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          aria-label={`Adicionar tarefa em ${column.title}`}
-          onClick={() => onAddTask(column.id)}
-        >
-          <Plus className="size-4" />
-        </Button>
+        {isCoordinator && (
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            aria-label={`Adicionar tarefa em ${column.title}`}
+            onClick={() => onAddTask(column.id)}
+          >
+            <Plus className="size-4" />
+          </Button>
+        )}
       </div>
 
       <div
@@ -88,7 +94,10 @@ function ColumnImpl({
               isDoneColumn={column.isDone}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
-              dragDisabled={dragDisabled}
+              canManage={isCoordinator}
+              dragDisabled={
+                dragDisabled || (!isCoordinator && task.assignee?.id !== currentUserId)
+              }
             />
           ))}
         </SortableContext>

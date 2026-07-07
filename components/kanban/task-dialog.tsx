@@ -37,7 +37,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, formatDate } from "@/lib/utils";
-import type { Column, Task, TaskInput } from "@/types/task";
+import type { Column, Task, TaskAssignee, TaskInput } from "@/types/task";
+
+const UNASSIGNED = "__unassigned__";
 
 interface TaskDialogProps {
   open: boolean;
@@ -45,6 +47,7 @@ interface TaskDialogProps {
   task: Task | null;
   defaultColumnId: string;
   columns: Column[];
+  assignableUsers: TaskAssignee[];
   titleSuggestions: string[];
   onSubmit: (input: TaskInput) => void;
 }
@@ -55,6 +58,7 @@ export function TaskDialog({
   task,
   defaultColumnId,
   columns,
+  assignableUsers,
   titleSuggestions,
   onSubmit,
 }: TaskDialogProps) {
@@ -77,6 +81,7 @@ export function TaskDialog({
             task={task}
             defaultColumnId={defaultColumnId}
             columns={columns}
+            assignableUsers={assignableUsers}
             titleSuggestions={titleSuggestions}
             isEditing={isEditing}
             onCancel={() => onOpenChange(false)}
@@ -95,6 +100,7 @@ interface TaskFormProps {
   task: Task | null;
   defaultColumnId: string;
   columns: Column[];
+  assignableUsers: TaskAssignee[];
   titleSuggestions: string[];
   isEditing: boolean;
   onCancel: () => void;
@@ -105,6 +111,7 @@ function TaskForm({
   task,
   defaultColumnId,
   columns,
+  assignableUsers,
   titleSuggestions,
   isEditing,
   onCancel,
@@ -113,7 +120,7 @@ function TaskForm({
   const [title, setTitle] = useState(task?.title ?? "");
   const [titlePopoverOpen, setTitlePopoverOpen] = useState(false);
   const [description, setDescription] = useState(task?.description ?? "");
-  const [assignee, setAssignee] = useState(task?.assignee ?? "");
+  const [assigneeId, setAssigneeId] = useState(task?.assignee?.id ?? UNASSIGNED);
   const [dueDate, setDueDate] = useState<Date | undefined>(
     task?.dueDate ? new Date(task.dueDate) : undefined
   );
@@ -128,7 +135,7 @@ function TaskForm({
     onSubmit({
       title: title.trim(),
       description: description.trim() || undefined,
-      assignee: assignee.trim() || undefined,
+      assigneeId: assigneeId === UNASSIGNED ? undefined : assigneeId,
       dueDate: dueDate ? dueDate.toISOString() : undefined,
       columnId,
     });
@@ -208,12 +215,26 @@ function TaskForm({
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor="task-assignee">Responsável (opcional)</Label>
-            <Input
-              id="task-assignee"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Nome"
-            />
+            <Select
+              items={[
+                { value: UNASSIGNED, label: "Sem responsável" },
+                ...assignableUsers.map((u) => ({ value: u.id, label: u.name })),
+              ]}
+              value={assigneeId}
+              onValueChange={(value) => value && setAssigneeId(value)}
+            >
+              <SelectTrigger id="task-assignee" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+                {assignableUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="task-due-date">Prazo (opcional)</Label>

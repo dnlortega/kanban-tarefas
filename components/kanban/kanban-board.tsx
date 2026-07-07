@@ -43,16 +43,59 @@ import {
   updateTask,
 } from "@/lib/actions/tasks";
 import { isOverdue } from "@/lib/utils";
-import type { ColumnWithTasks, Task, TaskInput } from "@/types/task";
+import type { ColumnWithTasks, Task, TaskAssignee, TaskInput } from "@/types/task";
 
 interface KanbanBoardProps {
   initialColumns: ColumnWithTasks[];
   titleSuggestions: string[];
+  assignableUsers: TaskAssignee[];
+  currentUserId: string;
+  isCoordinator: boolean;
 }
 
 const ALL_ASSIGNEES = "__all__";
+const ALL_DUE = "__all_due__";
 
-export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardProps) {
+type DueFilter = "overdue" | "today" | "week" | "none";
+
+const DUE_FILTER_OPTIONS: { value: DueFilter; label: string }[] = [
+  { value: "overdue", label: "Atrasadas" },
+  { value: "today", label: "Vence hoje" },
+  { value: "week", label: "Próximos 7 dias" },
+  { value: "none", label: "Sem prazo" },
+];
+
+function matchesDueFilter(
+  dueDate: string | null,
+  isDoneColumn: boolean,
+  filter: DueFilter | null
+): boolean {
+  if (!filter) return true;
+  if (filter === "none") return !dueDate;
+  if (!dueDate) return false;
+
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (filter === "overdue") return due.getTime() < today.getTime() && !isDoneColumn;
+  if (filter === "today") return due.getTime() === today.getTime();
+  if (filter === "week") {
+    const weekFromNow = new Date(today);
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+    return due.getTime() >= today.getTime() && due.getTime() <= weekFromNow.getTime();
+  }
+  return true;
+}
+
+export function KanbanBoard({
+  initialColumns,
+  titleSuggestions,
+  assignableUsers,
+  currentUserId,
+  isCoordinator,
+}: KanbanBoardProps) {
   const [columns, setColumns] = useState<ColumnWithTasks[]>(initialColumns);
   const [, startTransition] = useTransition();
 
@@ -67,12 +110,14 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
 
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
-  const isFiltering = search.trim().length > 0 || assigneeFilter !== null;
+  const [dueFilter, setDueFilter] = useState<DueFilter | null>(null);
+  const isFiltering =
+    search.trim().length > 0 || assigneeFilter !== null || dueFilter !== null;
 
   const assigneeOptions = useMemo(() => {
     const names = columns
       .flatMap((c) => c.tasks)
-      .map((t) => t.assignee)
+      .map((t) => t.assignee?.name)
       .filter((a): a is string => Boolean(a));
     return Array.from(new Set(names)).sort();
   }, [columns]);
@@ -87,11 +132,12 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
           !query ||
           t.title.toLowerCase().includes(query) ||
           (t.description?.toLowerCase().includes(query) ?? false);
-        const matchesAssignee = !assigneeFilter || t.assignee === assigneeFilter;
-        return matchesQuery && matchesAssignee;
+        const matchesAssignee = !assigneeFilter || t.assignee?.name === assigneeFilter;
+        const matchesDue = matchesDueFilter(t.dueDate, c.isDone, dueFilter);
+        return matchesQuery && matchesAssignee && matchesDue;
       }),
     }));
-  }, [columns, isFiltering, search, assigneeFilter]);
+  }, [columns, isFiltering, search, assigneeFilter, dueFilter]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -239,6 +285,11 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
     setDialogOpen(true);
   }, []);
 
+  function resolveAssignee(assigneeId?: string): TaskAssignee | null {
+    if (!assigneeId) return null;
+    return assignableUsers.find((u) => u.id === assigneeId) ?? null;
+  }
+
   function handleSubmit(input: TaskInput) {
     if (editingTask) {
       const id = editingTask.id;
@@ -250,7 +301,7 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
               ...editingTask,
               title: input.title,
               description: input.description ?? null,
-              assignee: input.assignee ?? null,
+              assignee: resolveAssignee(input.assigneeId),
               dueDate: input.dueDate ?? null,
               columnId: input.columnId,
             };
@@ -271,7 +322,7 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
         id: tempId,
         title: input.title,
         description: input.description ?? null,
-        assignee: input.assignee ?? null,
+        assignee: resolveAssignee(input.assigneeId),
         dueDate: input.dueDate ?? null,
         columnId: input.columnId,
         order: 9999,
@@ -328,40 +379,44 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
           </div>
           <div className="flex items-center gap-2">
             <EmailSummaryButton columns={columns} />
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    aria-label="Administrar colunas"
-                    nativeButton={false}
-                    render={<Link href="/admin" />}
-                  />
-                }
-              >
-                <Settings className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent>Administrar colunas</TooltipContent>
-            </Tooltip>
+            {isCoordinator && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Administrar colunas"
+                      nativeButton={false}
+                      render={<Link href="/admin" />}
+                    />
+                  }
+                >
+                  <Settings className="size-4" />
+                </TooltipTrigger>
+                <TooltipContent>Administrar colunas</TooltipContent>
+              </Tooltip>
+            )}
             <ThemeToggle />
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    size="icon"
-                    aria-label="Nova tarefa"
-                    onClick={() => openCreateDialog(columns[0]?.id ?? "")}
-                    disabled={columns.length === 0}
-                  />
-                }
-              >
-                <Plus className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent>Nova tarefa</TooltipContent>
-            </Tooltip>
+            {isCoordinator && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      size="icon"
+                      aria-label="Nova tarefa"
+                      onClick={() => openCreateDialog(columns[0]?.id ?? "")}
+                      disabled={columns.length === 0}
+                    />
+                  }
+                >
+                  <Plus className="size-4" />
+                </TooltipTrigger>
+                <TooltipContent>Nova tarefa</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
 
@@ -399,6 +454,28 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
               ))}
             </SelectContent>
           </Select>
+          <Select
+            items={[
+              { value: ALL_DUE, label: "Todos os prazos" },
+              ...DUE_FILTER_OPTIONS,
+            ]}
+            value={dueFilter ?? ALL_DUE}
+            onValueChange={(value) =>
+              setDueFilter(value === ALL_DUE ? null : (value as DueFilter))
+            }
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Prazo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_DUE}>Todos os prazos</SelectItem>
+              {DUE_FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {isFiltering && (
             <Tooltip>
               <TooltipTrigger
@@ -411,6 +488,7 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
                     onClick={() => {
                       setSearch("");
                       setAssigneeFilter(null);
+                      setDueFilter(null);
                     }}
                   />
                 }
@@ -440,6 +518,8 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
                   columns.find((c) => c.id === col.id)?.tasks.length ?? 0
                 }
                 dragDisabled={isFiltering}
+                isCoordinator={isCoordinator}
+                currentUserId={currentUserId}
                 onAddTask={openCreateDialog}
                 onEditTask={openEditDialog}
                 onDeleteTask={requestDelete}
@@ -490,6 +570,7 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
         task={editingTask}
         defaultColumnId={dialogColumnId}
         columns={columns}
+        assignableUsers={assignableUsers}
         titleSuggestions={titleSuggestions}
         onSubmit={handleSubmit}
       />

@@ -24,14 +24,18 @@ export function LoginForm({ from }: LoginFormProps) {
         <CardHeader className="items-center text-center">
           <Logo className="mb-2 size-10" />
           <CardTitle>Central de Tarefas & Jukebox</CardTitle>
-          <CardDescription>Digite a senha de acesso para continuar.</CardDescription>
+          <CardDescription>Entre com seu usuário e senha para continuar.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="flex flex-col gap-4">
             <input type="hidden" name="from" value={from ?? "/"} />
             <div className="grid gap-1.5">
+              <Label htmlFor="username">Usuário</Label>
+              <Input id="username" name="username" type="text" autoFocus required autoComplete="username" />
+            </div>
+            <div className="grid gap-1.5">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" name="password" type="password" autoFocus required />
+              <Input id="password" name="password" type="password" required autoComplete="current-password" />
               {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
             </div>
             <Tooltip>
