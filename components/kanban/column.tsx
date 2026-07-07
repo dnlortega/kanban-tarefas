@@ -13,6 +13,8 @@ import { TaskCard } from "@/components/kanban/task-card";
 interface ColumnProps {
   column: ColumnType;
   tasks: Task[];
+  totalCount: number;
+  dragDisabled?: boolean;
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
@@ -21,6 +23,8 @@ interface ColumnProps {
 function ColumnImpl({
   column,
   tasks,
+  totalCount,
+  dragDisabled,
   onAddTask,
   onEditTask,
   onDeleteTask,
@@ -29,6 +33,8 @@ function ColumnImpl({
     id: column.id,
     data: { type: "column", columnId: column.id },
   });
+
+  const isFiltered = tasks.length !== totalCount;
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border bg-card shadow-xs ring-1 ring-foreground/8 sm:w-80 sm:shrink-0">
@@ -50,7 +56,7 @@ function ColumnImpl({
               color: column.color,
             }}
           >
-            {tasks.length}
+            {isFiltered ? `${tasks.length}/${totalCount}` : totalCount}
           </span>
         </div>
         <Button
@@ -82,13 +88,14 @@ function ColumnImpl({
               isDoneColumn={column.isDone}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
+              dragDisabled={dragDisabled}
             />
           ))}
         </SortableContext>
 
         {tasks.length === 0 && (
           <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed py-6 text-xs text-muted-foreground">
-            Nenhuma tarefa
+            {totalCount === 0 ? "Nenhuma tarefa" : "Nenhum resultado"}
           </div>
         )}
       </div>

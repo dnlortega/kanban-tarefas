@@ -15,7 +15,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Search, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Column } from "@/components/kanban/column";
@@ -25,6 +25,14 @@ import { StatsBar } from "@/components/kanban/stats-bar";
 import { EmailSummaryButton } from "@/components/kanban/email-summary-button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -41,6 +49,8 @@ interface KanbanBoardProps {
   titleSuggestions: string[];
 }
 
+const ALL_ASSIGNEES = "__all__";
+
 export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardProps) {
   const [columns, setColumns] = useState<ColumnWithTasks[]>(initialColumns);
   const [, startTransition] = useTransition();
@@ -53,6 +63,34 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
   const taskToDelete = taskToDeleteId
     ? columns.flatMap((c) => c.tasks).find((t) => t.id === taskToDeleteId) ?? null
     : null;
+
+  const [search, setSearch] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
+  const isFiltering = search.trim().length > 0 || assigneeFilter !== null;
+
+  const assigneeOptions = useMemo(() => {
+    const names = columns
+      .flatMap((c) => c.tasks)
+      .map((t) => t.assignee)
+      .filter((a): a is string => Boolean(a));
+    return Array.from(new Set(names)).sort();
+  }, [columns]);
+
+  const filteredColumns = useMemo(() => {
+    if (!isFiltering) return columns;
+    const query = search.trim().toLowerCase();
+    return columns.map((c) => ({
+      ...c,
+      tasks: c.tasks.filter((t) => {
+        const matchesQuery =
+          !query ||
+          t.title.toLowerCase().includes(query) ||
+          (t.description?.toLowerCase().includes(query) ?? false);
+        const matchesAssignee = !assigneeFilter || t.assignee === assigneeFilter;
+        return matchesQuery && matchesAssignee;
+      }),
+    }));
+  }, [columns, isFiltering, search, assigneeFilter]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -311,6 +349,61 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
 
         <StatsBar {...stats} />
 
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[180px] flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por título ou descrição"
+              className="pl-8"
+            />
+          </div>
+          <Select
+            items={[
+              { value: ALL_ASSIGNEES, label: "Todos os responsáveis" },
+              ...assigneeOptions.map((name) => ({ value: name, label: name })),
+            ]}
+            value={assigneeFilter ?? ALL_ASSIGNEES}
+            onValueChange={(value) =>
+              setAssigneeFilter(value === ALL_ASSIGNEES ? null : value)
+            }
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ASSIGNEES}>Todos os responsáveis</SelectItem>
+              {assigneeOptions.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isFiltering && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Limpar filtros"
+                    onClick={() => {
+                      setSearch("");
+                      setAssigneeFilter(null);
+                    }}
+                  />
+                }
+              >
+                <X className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent>Limpar filtros</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
         <DndContext
           id="kanban-board"
           sensors={sensors}
@@ -320,11 +413,15 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
           onDragEnd={handleDragEnd}
         >
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-x-auto pb-2 sm:flex-row">
-            {columns.map((col) => (
+            {filteredColumns.map((col) => (
               <Column
                 key={col.id}
                 column={col}
                 tasks={col.tasks}
+                totalCount={
+                  columns.find((c) => c.id === col.id)?.tasks.length ?? 0
+                }
+                dragDisabled={isFiltering}
                 onAddTask={openCreateDialog}
                 onEditTask={openEditDialog}
                 onDeleteTask={requestDelete}

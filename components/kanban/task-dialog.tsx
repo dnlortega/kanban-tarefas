@@ -248,6 +248,7 @@ function TaskForm({
         <div className="grid gap-1.5">
           <Label htmlFor="task-status">Status</Label>
           <Select
+            items={columns.map((col) => ({ value: col.id, label: col.title }))}
             value={columnId}
             onValueChange={(value) => value && setColumnId(value)}
           >

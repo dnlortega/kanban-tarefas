@@ -17,9 +17,17 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   overlay?: boolean;
+  dragDisabled?: boolean;
 }
 
-function TaskCardImpl({ task, isDoneColumn, onEdit, onDelete, overlay }: TaskCardProps) {
+function TaskCardImpl({
+  task,
+  isDoneColumn,
+  onEdit,
+  onDelete,
+  overlay,
+  dragDisabled,
+}: TaskCardProps) {
   const {
     setNodeRef,
     attributes,
@@ -30,6 +38,7 @@ function TaskCardImpl({ task, isDoneColumn, onEdit, onDelete, overlay }: TaskCar
   } = useSortable({
     id: task.id,
     data: { type: "task", columnId: task.columnId },
+    disabled: dragDisabled,
   });
 
   const style = {
@@ -52,8 +61,14 @@ function TaskCardImpl({ task, isDoneColumn, onEdit, onDelete, overlay }: TaskCar
       <CardContent className="flex items-start gap-2 p-3">
         <button
           type="button"
-          className="mt-0.5 cursor-grab touch-none text-muted-foreground/50 active:cursor-grabbing hover:text-muted-foreground"
+          className={cn(
+            "mt-0.5 touch-none text-muted-foreground/50",
+            dragDisabled
+              ? "cursor-not-allowed"
+              : "cursor-grab hover:text-muted-foreground active:cursor-grabbing"
+          )}
           aria-label="Arrastar tarefa"
+          disabled={dragDisabled}
           {...attributes}
           {...listeners}
         >
