@@ -20,10 +20,12 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 
 - Criar, editar e excluir tarefas (título, descrição, responsável, prazo)
 - Drag and drop entre colunas e reordenação dentro da mesma coluna
+- Busca por texto e filtro por responsável (desabilita o drag enquanto um filtro está ativo)
 - Autocomplete de título baseado em tarefas já criadas
 - Avatar com iniciais do responsável e indicador visual de tarefa atrasada
 - Mini-dashboard: total de tarefas, concluídas e atrasadas
 - Botão para enviar um resumo das tarefas concluídas por e-mail (abre o cliente de e-mail padrão)
+- Sincronização entre abas/dispositivos por polling (pausa automaticamente enquanto você arrasta um card ou tem um dialog aberto)
 - Persistência 100% em banco de dados (PostgreSQL via Prisma), sem `localStorage`
 
 ### Administração de colunas (`/admin`)
@@ -33,15 +35,18 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 
 ### Jukebox
 
-- **`/jukebox`** — player com a música atual (YouTube IFrame API), avança automaticamente para a próxima da fila ao terminar, botão de pular e remover itens da fila
-- **`/jukebox/pedir`** — busca músicas por nome/artista (YouTube Data API v3) e adiciona à fila
+- **`/jukebox`** — player com a música atual (YouTube IFrame API), avança automaticamente para a próxima da fila ao terminar, botão de pular, reordenar a fila por drag and drop e remover itens
+- **`/jukebox/pedir`** — busca músicas por nome/artista (YouTube Data API v3) e adiciona à fila; pedidos duplicados (mesma música já na fila) são rejeitados
 - **`/jukebox/bloqueios`** — lista de termos bloqueados; músicas cujo título contenha um termo bloqueado não podem ser pedidas nem tocadas
+- Histórico das últimas 10 músicas tocadas
 - Sincronização entre telas por polling (consulta o banco a cada poucos segundos), permitindo usar uma tela para tocar (ex: TV) e outra para pedir (ex: celular)
 
 ### Geral
 
-- Login com senha única compartilhada (`APP_PASSWORD`) protegendo todo o sistema
-- Sidebar de navegação no desktop; barra de navegação inferior (ícones) no mobile
+- Login com senha única compartilhada (`APP_PASSWORD`) protegendo todo o sistema, com rate limit de tentativas (5 erradas / 15 min por IP)
+- Instalável como app (PWA) — "Adicionar à tela inicial" no celular
+- Vercel Analytics integrado
+- Sidebar de navegação no desktop (colapsável para ícones); barra de navegação inferior (ícones) no mobile
 - Dark mode
 - Design responsivo para desktop e mobile
 
@@ -71,7 +76,7 @@ YOUTUBE_API_KEY=sua_chave_aqui
 
 Veja o passo a passo em [docs/youtube-api-key.md](docs/youtube-api-key.md). Sem a chave, o restante do sistema (Kanban, admin, player, bloqueios) funciona normalmente — só a busca por nome fica indisponível.
 
-Defina também `APP_PASSWORD` — a senha única para acessar o sistema (protege todas as rotas via `middleware.ts`). Se deixar em branco, o sistema fica sem proteção nenhuma.
+Defina também `APP_PASSWORD` — a senha única para acessar o sistema (protege todas as rotas via `proxy.ts`). Se deixar em branco, o sistema fica sem proteção nenhuma.
 
 ```
 APP_PASSWORD=sua_senha_aqui
@@ -103,6 +108,16 @@ Acesse [http://localhost:3000](http://localhost:3000).
 2. No outro dispositivo, acesse `http://SEU_IP:3000` (ex: `http://192.168.1.10:3000`).
 3. Se não conectar, o Firewall do Windows pode estar bloqueando. Ao rodar `npm run dev` pela primeira vez, o Windows deve perguntar se permite o Node.js na rede — escolha "Permitir acesso". Se não perguntar, libere manualmente em *Painel de Controle → Firewall do Windows Defender → Permitir um aplicativo* (ou rode como administrador: `New-NetFirewallRule -DisplayName "Next.js Dev" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow -Profile Private`).
 
+## Testes
+
+Testes de ponta a ponta com Playwright, cobrindo login, CRUD de tarefas, busca/filtro e o jukebox:
+
+```bash
+npm test
+```
+
+Precisa do servidor rodando (o Playwright sobe um automaticamente se nenhum estiver ativo) e de `APP_PASSWORD` configurada em `.env`. Os testes rodam em série (`workers: 1`) de propósito — o app tem um quadro e uma fila **globais** (sem isolamento por usuário), então rodar em paralelo faria os testes colidirem no mesmo estado.
+
 ## Deploy na Vercel
 
 1. Importe o repositório em [vercel.com/new](https://vercel.com/new).
@@ -119,6 +134,7 @@ Acesse [http://localhost:3000](http://localhost:3000).
 | `npm run build` | Build de produção |
 | `npm run start` | Roda o build de produção |
 | `npm run lint` | ESLint |
+| `npm test` | Testes end-to-end (Playwright) |
 | `npx prisma studio` | Interface visual para o banco de dados |
 | `npx prisma migrate dev` | Cria/aplica migrations |
 
@@ -131,8 +147,9 @@ app/
     admin/                  Administração de colunas
     jukebox/                Player, pedido de música e bloqueios
   login/                    Página de login (sem sidebar)
-  layout.tsx                Layout raiz (tema, toaster)
-middleware.ts                Bloqueia acesso sem cookie de sessão válido
+  layout.tsx                Layout raiz (tema, toaster, analytics)
+  manifest.ts                Manifest do PWA
+proxy.ts                     Bloqueia acesso sem cookie de sessão válido
 components/
   kanban/                   Board, colunas, cards, dialogs, stats
   admin/                    Gerenciador de colunas
@@ -145,8 +162,9 @@ lib/
   youtube.ts                Integração com YouTube Data API v3
   nav.ts                    Itens de navegação (sidebar + bottom nav)
 prisma/
-  schema.prisma             Modelos: Column, Task, Track, BlockedSong
+  schema.prisma             Modelos: Column, Task, Track, BlockedSong, LoginAttempt
   seed.ts                   Dados iniciais
+tests/                      Testes end-to-end (Playwright)
 types/                      Tipos compartilhados (task, jukebox)
 ```
 

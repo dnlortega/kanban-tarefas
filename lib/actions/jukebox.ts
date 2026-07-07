@@ -142,6 +142,19 @@ export async function removeFromQueue(trackId: string) {
   revalidatePath("/jukebox/pedir");
 }
 
+export async function reorderQueue(orderedIds: string[]) {
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.track.update({
+        where: { id, status: "queued" },
+        data: { order: index },
+      })
+    )
+  );
+  revalidatePath("/jukebox");
+  revalidatePath("/jukebox/pedir");
+}
+
 export async function getRecentlyPlayed(limit = 10) {
   const tracks = await prisma.track.findMany({
     where: { status: "done" },

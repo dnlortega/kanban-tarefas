@@ -2,16 +2,35 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { History, Music, SkipForward, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, History, Music, SkipForward, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   advanceQueue,
   getQueueState,
   getRecentlyPlayed,
   removeFromQueue,
+  reorderQueue,
   skipTrack,
 } from "@/lib/actions/jukebox";
 import type { Track } from "@/types/jukebox";
@@ -52,10 +71,17 @@ export function JukeboxPlayer({
   const [playing, setPlaying] = useState(initialPlaying);
   const [queue, setQueue] = useState(initialQueue);
   const [history, setHistory] = useState(initialHistory);
+  const [isDragging, setIsDragging] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
   const playingIdRef = useRef<string | null>(initialPlaying?.id ?? null);
+  const isDraggingRef = useRef(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const handleEnded = useCallback(async () => {
     const next = await advanceQueue(playingIdRef.current ?? undefined);
@@ -68,6 +94,10 @@ export function JukeboxPlayer({
   useEffect(() => {
     playingIdRef.current = playing?.id ?? null;
   }, [playing]);
+
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
 
   useEffect(() => {
     function createPlayer() {
@@ -111,7 +141,9 @@ export function JukeboxPlayer({
   useEffect(() => {
     const interval = setInterval(async () => {
       const state = await getQueueState();
-      setQueue(state.queued);
+      if (!isDraggingRef.current) {
+        setQueue(state.queued);
+      }
       setPlaying((current) =>
         state.playing?.id !== current?.id ? state.playing : current
       );
@@ -132,6 +164,21 @@ export function JukeboxPlayer({
   async function handleRemove(id: string) {
     setQueue((q) => q.filter((t) => t.id !== id));
     await removeFromQueue(id);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setIsDragging(false);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setQueue((prev) => {
+      const oldIndex = prev.findIndex((t) => t.id === active.id);
+      const newIndex = prev.findIndex((t) => t.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      reorderQueue(reordered.map((t) => t.id)).catch(() => {});
+      return reordered;
+    });
   }
 
   return (
@@ -204,54 +251,35 @@ export function JukeboxPlayer({
         <h2 className="text-sm font-semibold text-muted-foreground">
           Próximas ({queue.length})
         </h2>
-        <div className="flex flex-col gap-2 overflow-y-auto">
-          {queue.map((track, index) => (
-            <Card key={track.id} className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-              <CardContent className="flex items-center gap-2 p-2.5">
-                <span className="w-4 shrink-0 text-center text-xs text-muted-foreground">
-                  {index + 1}
-                </span>
-                {track.thumbnail && (
-                  <Image
-                    src={track.thumbnail}
-                    alt=""
-                    width={64}
-                    height={40}
-                    className="h-10 w-16 shrink-0 rounded object-cover"
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{track.title}</p>
-                  {track.requestedBy && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {track.requestedBy}
-                    </p>
-                  )}
-                </div>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        aria-label="Remover da fila"
-                        onClick={() => handleRemove(track.id)}
-                      />
-                    }
-                  >
-                    <Trash2 className="size-3.5" />
-                  </TooltipTrigger>
-                  <TooltipContent>Remover da fila</TooltipContent>
-                </Tooltip>
-              </CardContent>
-            </Card>
-          ))}
-          {queue.length === 0 && (
-            <p className="rounded-lg border border-dashed py-8 text-center text-xs text-muted-foreground">
-              Fila vazia
-            </p>
-          )}
-        </div>
+        <DndContext
+          id="jukebox-queue"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setIsDragging(false)}
+        >
+          <SortableContext
+            items={queue.map((t) => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="flex flex-col gap-2 overflow-y-auto">
+              {queue.map((track, index) => (
+                <QueueItem
+                  key={track.id}
+                  track={track}
+                  index={index}
+                  onRemove={handleRemove}
+                />
+              ))}
+              {queue.length === 0 && (
+                <p className="rounded-lg border border-dashed py-8 text-center text-xs text-muted-foreground">
+                  Fila vazia
+                </p>
+              )}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         {history.length > 0 && (
           <>
@@ -273,5 +301,79 @@ export function JukeboxPlayer({
         )}
       </div>
     </div>
+  );
+}
+
+interface QueueItemProps {
+  track: Track;
+  index: number;
+  onRemove: (id: string) => void;
+}
+
+function QueueItem({ track, index, onRemove }: QueueItemProps) {
+  const { setNodeRef, attributes, listeners, transform, transition, isDragging } =
+    useSortable({ id: track.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "animate-in fade-in slide-in-from-bottom-1 duration-300",
+        isDragging && "opacity-40"
+      )}
+    >
+      <CardContent className="flex items-center gap-2 p-2.5">
+        <button
+          type="button"
+          className="cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
+          aria-label="Arrastar para reordenar"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <span className="w-4 shrink-0 text-center text-xs text-muted-foreground">
+          {index + 1}
+        </span>
+        {track.thumbnail && (
+          <Image
+            src={track.thumbnail}
+            alt=""
+            width={64}
+            height={40}
+            className="h-10 w-16 shrink-0 rounded object-cover"
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{track.title}</p>
+          {track.requestedBy && (
+            <p className="truncate text-xs text-muted-foreground">
+              {track.requestedBy}
+            </p>
+          )}
+        </div>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Remover da fila"
+                onClick={() => onRemove(track.id)}
+              />
+            }
+          >
+            <Trash2 className="size-3.5" />
+          </TooltipTrigger>
+          <TooltipContent>Remover da fila</TooltipContent>
+        </Tooltip>
+      </CardContent>
+    </Card>
   );
 }
