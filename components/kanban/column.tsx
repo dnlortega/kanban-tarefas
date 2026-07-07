@@ -31,7 +31,11 @@ function ColumnImpl({
   });
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col rounded-xl border bg-muted/30 sm:w-80 sm:shrink-0">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border bg-card shadow-xs ring-1 ring-foreground/8 sm:w-80 sm:shrink-0">
+      <div
+        className="h-1 shrink-0"
+        style={{ backgroundColor: column.color }}
+      />
       <div className="flex items-center justify-between gap-2 px-3 py-3">
         <div className="flex min-w-0 items-center gap-2">
           <span
@@ -39,7 +43,13 @@ function ColumnImpl({
             style={{ backgroundColor: column.color }}
           />
           <h2 className="truncate text-sm font-semibold">{column.title}</h2>
-          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+          <span
+            className="shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium"
+            style={{
+              backgroundColor: `${column.color}1a`,
+              color: column.color,
+            }}
+          >
             {tasks.length}
           </span>
         </div>
@@ -57,8 +67,8 @@ function ColumnImpl({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 pt-0 transition-colors",
-          isOver && "bg-primary/5 ring-2 ring-primary/30 ring-inset"
+          "flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto bg-muted/40 p-2 transition-colors",
+          isOver && "bg-primary/10 ring-2 ring-primary/30 ring-inset"
         )}
       >
         <SortableContext
