@@ -18,6 +18,9 @@ export default defineConfig({
   // The DB is a remote Neon Postgres instance, so occasional latency
   // spikes are real network variance, not app bugs — one retry absorbs those.
   retries: 1,
+  // Turbopack compiles each route on first visit, which combined with
+  // remote DB latency can push a test past the 30s default comfortably.
+  timeout: 60000,
   reporter: "list",
   use: {
     baseURL: "http://localhost:3000",
