@@ -219,8 +219,8 @@ export function JukeboxPlayer({
   }
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 sm:p-6 lg:grid-cols-[1fr_320px]">
-      <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 lg:grid lg:min-h-0 lg:grid-cols-[1fr_320px] lg:overflow-hidden">
+      <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto">
         <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
           <div ref={containerRef} className="size-full" />
         </div>
@@ -316,7 +316,7 @@ export function JukeboxPlayer({
         )}
       </div>
 
-      <div className="flex min-h-0 flex-col gap-2">
+      <div className="flex flex-col gap-2 lg:min-h-0">
         <h2 className="text-sm font-semibold text-muted-foreground">
           Próximas ({queue.length})
         </h2>
@@ -332,7 +332,7 @@ export function JukeboxPlayer({
             items={queue.map((t) => t.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+            <div className="flex flex-col gap-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
               {queue.map((track, index) => (
                 <QueueItem
                   key={track.id}
