@@ -16,6 +16,7 @@ interface TaskCardProps {
   isDoneColumn: boolean;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onView?: (task: Task) => void;
   overlay?: boolean;
   dragDisabled?: boolean;
   canManage?: boolean;
@@ -26,6 +27,7 @@ function TaskCardImpl({
   isDoneColumn,
   onEdit,
   onDelete,
+  onView,
   overlay,
   dragDisabled,
   canManage = true,
@@ -77,7 +79,10 @@ function TaskCardImpl({
           <GripVertical className="size-4" />
         </button>
 
-        <div className="min-w-0 flex-1">
+        <div
+          className={cn("min-w-0 flex-1", !canManage && onView && "cursor-pointer")}
+          onClick={!canManage ? () => onView?.(task) : undefined}
+        >
           <p className="truncate text-sm font-medium leading-tight">
             {task.title}
           </p>

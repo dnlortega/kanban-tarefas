@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Column } from "@/components/kanban/column";
 import { TaskCard } from "@/components/kanban/task-card";
 import { TaskDialog } from "@/components/kanban/task-dialog";
+import { TaskDetailDialog } from "@/components/kanban/task-detail-dialog";
 import { StatsBar } from "@/components/kanban/stats-bar";
 import { EmailSummaryButton } from "@/components/kanban/email-summary-button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -102,6 +103,7 @@ export function KanbanBoard({
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [dialogColumnId, setDialogColumnId] = useState(columns[0]?.id ?? "");
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
   const taskToDelete = taskToDeleteId
@@ -149,8 +151,11 @@ export function KanbanBoard({
   const isBusyRef = useRef(false);
   useEffect(() => {
     isBusyRef.current =
-      activeTask !== null || dialogOpen || taskToDeleteId !== null;
-  }, [activeTask, dialogOpen, taskToDeleteId]);
+      activeTask !== null ||
+      dialogOpen ||
+      taskToDeleteId !== null ||
+      viewingTask !== null;
+  }, [activeTask, dialogOpen, taskToDeleteId, viewingTask]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -283,6 +288,10 @@ export function KanbanBoard({
     setEditingTask(task);
     setDialogColumnId(task.columnId);
     setDialogOpen(true);
+  }, []);
+
+  const openViewDialog = useCallback((task: Task) => {
+    setViewingTask(task);
   }, []);
 
   function resolveAssignee(assigneeId?: string): TaskAssignee | null {
@@ -523,6 +532,7 @@ export function KanbanBoard({
                 onAddTask={openCreateDialog}
                 onEditTask={openEditDialog}
                 onDeleteTask={requestDelete}
+                onViewTask={openViewDialog}
               />
             ))}
             {columns.length === 0 && (
@@ -586,6 +596,18 @@ export function KanbanBoard({
         }
         confirmLabel="Excluir"
         onConfirm={confirmDelete}
+      />
+
+      <TaskDetailDialog
+        open={viewingTask !== null}
+        onOpenChange={(open) => !open && setViewingTask(null)}
+        task={viewingTask}
+        columnTitle={
+          columns.find((c) => c.id === viewingTask?.columnId)?.title ?? ""
+        }
+        isDoneColumn={
+          columns.find((c) => c.id === viewingTask?.columnId)?.isDone ?? false
+        }
       />
     </>
   );

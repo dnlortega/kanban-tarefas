@@ -20,6 +20,7 @@ interface ColumnProps {
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
+  onViewTask: (task: Task) => void;
 }
 
 function ColumnImpl({
@@ -32,6 +33,7 @@ function ColumnImpl({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onViewTask,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -94,6 +96,7 @@ function ColumnImpl({
               isDoneColumn={column.isDone}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
+              onView={onViewTask}
               canManage={isCoordinator}
               dragDisabled={dragDisabled || task.assignee?.id !== currentUserId}
             />
