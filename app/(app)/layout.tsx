@@ -23,7 +23,7 @@ export default async function AppShellLayout({
       <AppSidebar isCoordinator={isCoordinator} />
       <SidebarInset>
         <AppHeader userName={currentUser.name} />
-        <div className="flex flex-1 flex-col pb-14 md:pb-0">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col pb-14 md:pb-0">{children}</div>
       </SidebarInset>
       <MobileBottomNav isCoordinator={isCoordinator} />
     </SidebarProvider>
