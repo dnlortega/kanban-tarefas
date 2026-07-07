@@ -18,7 +18,9 @@ import { CalendarClock, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { TaskAvatar } from "@/components/kanban/task-avatar";
 import { cn, formatDate, isOverdue } from "@/lib/utils";
 import { assignTask, type AssignableTask } from "@/lib/actions/tasks";
@@ -42,6 +44,7 @@ const ROLE_LABEL: Record<string, string> = {
 export function AssignBoard({ initialTasks, users }: AssignBoardProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [search, setSearch] = useState("");
+  const [onlyUnassigned, setOnlyUnassigned] = useState(false);
   const [activeTask, setActiveTask] = useState<AssignableTask | null>(null);
   const [, startTransition] = useTransition();
 
@@ -52,9 +55,12 @@ export function AssignBoard({ initialTasks, users }: AssignBoardProps) {
 
   const filteredTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return tasks;
-    return tasks.filter((t) => t.title.toLowerCase().includes(query));
-  }, [tasks, search]);
+    return tasks.filter((t) => {
+      const matchesQuery = !query || t.title.toLowerCase().includes(query);
+      const matchesUnassigned = !onlyUnassigned || !t.assignee;
+      return matchesQuery && matchesUnassigned;
+    });
+  }, [tasks, search, onlyUnassigned]);
 
   function handleDragStart(event: DragStartEvent) {
     const task = tasks.find((t) => t.id === event.active.id);
@@ -104,6 +110,13 @@ export function AssignBoard({ initialTasks, users }: AssignBoardProps) {
               className="pl-8"
             />
           </div>
+          <Label className="flex w-fit items-center gap-2 text-sm font-normal">
+            <Checkbox
+              checked={onlyUnassigned}
+              onCheckedChange={(checked) => setOnlyUnassigned(checked === true)}
+            />
+            Somente sem responsável
+          </Label>
           <div className="flex flex-col gap-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             {filteredTasks.map((task) => (
               <DraggableTaskCard key={task.id} task={task} />
