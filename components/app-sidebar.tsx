@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 
 import {
   Sidebar,
@@ -17,55 +18,58 @@ import {
 import { Logo } from "@/components/logo";
 import { boardNav, jukeboxNav } from "@/lib/nav";
 
+interface NavItem {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface NavGroupProps {
+  label: string;
+  items: NavItem[];
+  pathname: string;
+}
+
+function NavGroup({ label, items, pathname }: NavGroupProps) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                render={<Link href={item.href} />}
+                isActive={pathname === item.href}
+                tooltip={item.title}
+              >
+                <item.icon />
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar className="hidden md:flex">
+    <Sidebar collapsible="icon" className="hidden md:flex">
       <SidebarHeader className="px-3 py-4">
         <div className="flex items-center gap-2 px-1">
-          <Logo className="size-7" />
-          <span className="text-sm font-semibold tracking-tight">Central</span>
+          <Logo className="size-7 shrink-0" />
+          <span className="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
+            Central
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Tarefas</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {boardNav.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    render={<Link href={item.href} />}
-                    isActive={pathname === item.href}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Jukebox</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {jukeboxNav.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    render={<Link href={item.href} />}
-                    isActive={pathname === item.href}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <NavGroup label="Tarefas" items={boardNav} pathname={pathname} />
+        <NavGroup label="Jukebox" items={jukeboxNav} pathname={pathname} />
       </SidebarContent>
     </Sidebar>
   );
