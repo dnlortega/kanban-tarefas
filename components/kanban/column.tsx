@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
+import { Eraser, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ interface ColumnProps {
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
   onViewTask: (task: Task) => void;
+  onClearColumn: (columnId: string) => void;
 }
 
 function ColumnImpl({
@@ -34,6 +35,7 @@ function ColumnImpl({
   onEditTask,
   onDeleteTask,
   onViewTask,
+  onClearColumn,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -66,15 +68,28 @@ function ColumnImpl({
           </span>
         </div>
         {isCoordinator && (
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            aria-label={`Adicionar tarefa em ${column.title}`}
-            onClick={() => onAddTask(column.id)}
-          >
-            <Plus className="size-4" />
-          </Button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            {totalCount > 0 && (
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Limpar tarefas de ${column.title}`}
+                onClick={() => onClearColumn(column.id)}
+              >
+                <Eraser className="size-4" />
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={`Adicionar tarefa em ${column.title}`}
+              onClick={() => onAddTask(column.id)}
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
         )}
       </div>
 

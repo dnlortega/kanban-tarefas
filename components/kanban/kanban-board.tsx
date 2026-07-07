@@ -37,6 +37,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
+  clearColumnTasks,
   createTask,
   deleteTask,
   getBoardState,
@@ -109,6 +110,10 @@ export function KanbanBoard({
   const taskToDelete = taskToDeleteId
     ? columns.flatMap((c) => c.tasks).find((t) => t.id === taskToDeleteId) ?? null
     : null;
+  const [columnToClearId, setColumnToClearId] = useState<string | null>(null);
+  const columnToClear = columnToClearId
+    ? (columns.find((c) => c.id === columnToClearId) ?? null)
+    : null;
 
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
@@ -154,8 +159,9 @@ export function KanbanBoard({
       activeTask !== null ||
       dialogOpen ||
       taskToDeleteId !== null ||
+      columnToClearId !== null ||
       viewingTask !== null;
-  }, [activeTask, dialogOpen, taskToDeleteId, viewingTask]);
+  }, [activeTask, dialogOpen, taskToDeleteId, columnToClearId, viewingTask]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -374,6 +380,24 @@ export function KanbanBoard({
     toast("Tarefa excluída");
   }, [taskToDeleteId]);
 
+  const requestClearColumn = useCallback((columnId: string) => {
+    setColumnToClearId(columnId);
+  }, []);
+
+  const confirmClearColumn = useCallback(() => {
+    const columnId = columnToClearId;
+    if (!columnId) return;
+    setColumns((prev) =>
+      prev.map((c) => (c.id === columnId ? { ...c, tasks: [] } : c))
+    );
+    startTransition(() => {
+      clearColumnTasks(columnId).catch(() =>
+        toast.error("Erro ao limpar as tarefas da coluna")
+      );
+    });
+    toast("Tarefas removidas");
+  }, [columnToClearId]);
+
   return (
     <>
       <div className="flex flex-col gap-4 p-4 sm:p-6">
@@ -533,6 +557,7 @@ export function KanbanBoard({
                 onEditTask={openEditDialog}
                 onDeleteTask={requestDelete}
                 onViewTask={openViewDialog}
+                onClearColumn={requestClearColumn}
               />
             ))}
             {columns.length === 0 && (
@@ -596,6 +621,19 @@ export function KanbanBoard({
         }
         confirmLabel="Excluir"
         onConfirm={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={columnToClearId !== null}
+        onOpenChange={(open) => !open && setColumnToClearId(null)}
+        title="Limpar tarefas da coluna"
+        description={
+          columnToClear
+            ? `Tem certeza que deseja excluir todas as ${columnToClear.tasks.length} tarefas de "${columnToClear.title}"? Essa ação não pode ser desfeita.`
+            : ""
+        }
+        confirmLabel="Limpar"
+        onConfirm={confirmClearColumn}
       />
 
       <TaskDetailDialog

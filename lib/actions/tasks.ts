@@ -83,6 +83,12 @@ export async function deleteTask(id: string) {
   revalidatePath("/");
 }
 
+export async function clearColumnTasks(columnId: string) {
+  await requireCoordinator();
+  await prisma.task.deleteMany({ where: { columnId } });
+  revalidatePath("/");
+}
+
 export async function assignTask(taskId: string, userId: string | null) {
   await requireCoordinator();
   await prisma.task.update({
