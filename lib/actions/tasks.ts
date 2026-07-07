@@ -62,17 +62,8 @@ export async function createTask(input: TaskInput) {
 export async function updateTask(id: string, input: TaskInput) {
   await requireCoordinator();
 
-  const existing = await prisma.task.findUniqueOrThrow({ where: { id } });
-
-  let order = existing.order;
-  if (existing.columnId !== input.columnId) {
-    const last = await prisma.task.findFirst({
-      where: { columnId: input.columnId },
-      orderBy: { order: "desc" },
-    });
-    order = last ? last.order + 1 : 0;
-  }
-
+  // A situação (coluna) só muda por quem a tarefa está atribuída, arrastando
+  // no quadro — nem o coordenador pode alterá-la por aqui.
   await prisma.task.update({
     where: { id },
     data: {
@@ -80,8 +71,6 @@ export async function updateTask(id: string, input: TaskInput) {
       description: input.description || null,
       assigneeId: input.assigneeId || null,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
-      columnId: input.columnId,
-      order,
     },
   });
 
@@ -142,11 +131,16 @@ export async function getAssignableTasks(): Promise<AssignableTask[]> {
 export interface CalendarTask {
   id: string;
   title: string;
+  description: string | null;
   dueDate: string;
+  order: number;
+  columnId: string;
   columnTitle: string;
   columnColor: string;
   isDoneColumn: boolean;
   assignee: { id: string; name: string } | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export async function getTasksForMonth(year: number, month: number): Promise<CalendarTask[]> {
@@ -165,11 +159,16 @@ export async function getTasksForMonth(year: number, month: number): Promise<Cal
   return tasks.map((task) => ({
     id: task.id,
     title: task.title,
+    description: task.description,
     dueDate: task.dueDate!.toISOString(),
+    order: task.order,
+    columnId: task.columnId,
     columnTitle: task.column.title,
     columnColor: task.column.color,
     isDoneColumn: task.column.isDone,
     assignee: task.assignee,
+    createdAt: task.createdAt.toISOString(),
+    updatedAt: task.updatedAt.toISOString(),
   }));
 }
 
@@ -192,22 +191,22 @@ export async function syncColumnsOrder(payload: ColumnOrderPayload[]) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Não autenticado");
 
-  if (user.role !== "coordinator") {
-    const allTaskIds = payload.flatMap((p) => p.taskIds);
-    const tasks = await prisma.task.findMany({
-      where: { id: { in: allTaskIds } },
-      select: { id: true, columnId: true, assigneeId: true },
-    });
-    const taskById = new Map(tasks.map((t) => [t.id, t]));
+  // A situação de uma tarefa só muda pela mão de quem está atribuído a ela —
+  // essa regra vale até para o coordenador.
+  const allTaskIds = payload.flatMap((p) => p.taskIds);
+  const tasks = await prisma.task.findMany({
+    where: { id: { in: allTaskIds } },
+    select: { id: true, columnId: true, assigneeId: true },
+  });
+  const taskById = new Map(tasks.map((t) => [t.id, t]));
 
-    for (const { columnId, taskIds } of payload) {
-      for (const taskId of taskIds) {
-        const task = taskById.get(taskId);
-        if (!task) continue;
-        const isMoving = task.columnId !== columnId;
-        if (isMoving && task.assigneeId !== user.id) {
-          throw new Error("Você só pode mover as suas próprias tarefas.");
-        }
+  for (const { columnId, taskIds } of payload) {
+    for (const taskId of taskIds) {
+      const task = taskById.get(taskId);
+      if (!task) continue;
+      const isMoving = task.columnId !== columnId;
+      if (isMoving && task.assigneeId !== user.id) {
+        throw new Error("Só quem está atribuído à tarefa pode mudar sua situação.");
       }
     }
   }

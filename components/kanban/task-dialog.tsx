@@ -266,25 +266,33 @@ function TaskForm({
           </div>
         </div>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="task-status">Status</Label>
-          <Select
-            items={columns.map((col) => ({ value: col.id, label: col.title }))}
-            value={columnId}
-            onValueChange={(value) => value && setColumnId(value)}
-          >
-            <SelectTrigger id="task-status" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {columns.map((col) => (
-                <SelectItem key={col.id} value={col.id}>
-                  {col.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isEditing && (
+          <div className="grid gap-1.5">
+            <Label htmlFor="task-status">Status inicial</Label>
+            <Select
+              items={columns.map((col) => ({ value: col.id, label: col.title }))}
+              value={columnId}
+              onValueChange={(value) => value && setColumnId(value)}
+            >
+              <SelectTrigger id="task-status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {columns.map((col) => (
+                  <SelectItem key={col.id} value={col.id}>
+                    {col.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {isEditing && (
+          <p className="text-xs text-muted-foreground">
+            A situação da tarefa só pode ser alterada pelo responsável, arrastando-a no
+            quadro.
+          </p>
+        )}
       </div>
 
       <DialogFooter>
