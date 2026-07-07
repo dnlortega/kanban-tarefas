@@ -1,11 +1,12 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, createSessionToken } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
+import { getClientIp } from "@/lib/request-ip";
 
 export interface LoginState {
   error?: string;
@@ -13,12 +14,6 @@ export interface LoginState {
 
 const MAX_ATTEMPTS = 5;
 const WINDOW_MINUTES = 15;
-
-async function getClientIp(): Promise<string> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || "unknown";
-}
 
 export async function login(
   _prevState: LoginState | undefined,

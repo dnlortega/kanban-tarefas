@@ -76,3 +76,12 @@ model LoginAttempt {
 
   @@index([ip, createdAt])
 }
+
+model RequestAttempt {
+  id        String   @id @default(cuid())
+  scope     String
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([scope, ip, createdAt])
+}

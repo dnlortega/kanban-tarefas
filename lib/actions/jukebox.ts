@@ -6,6 +6,8 @@ import type { Track as PrismaTrack } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { searchYoutube } from "@/lib/youtube";
 import { findMatchingBlock } from "@/lib/actions/blocklist";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import type { Track } from "@/types/jukebox";
 
 function serialize(track: PrismaTrack): Track {
@@ -58,6 +60,9 @@ async function pickNextQueuedTrack(): Promise<PrismaTrack | null> {
 }
 
 export async function searchTracks(query: string) {
+  const ip = await getClientIp();
+  await checkRateLimit("jukebox-search", ip, 20, 5);
+
   const results = await searchYoutube(query);
   const blocked = await prisma.blockedSong.findMany();
 
@@ -78,6 +83,9 @@ interface RequestTrackInput {
 }
 
 export async function requestTrack(input: RequestTrackInput) {
+  const ip = await getClientIp();
+  await checkRateLimit("jukebox-request", ip, 10, 5);
+
   const blockedTerm = await findMatchingBlock(input.title);
   if (blockedTerm) {
     throw new Error(`Essa música está bloqueada (termo: "${blockedTerm}").`);
