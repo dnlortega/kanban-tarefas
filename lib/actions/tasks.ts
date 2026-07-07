@@ -94,6 +94,51 @@ export async function deleteTask(id: string) {
   revalidatePath("/");
 }
 
+export async function assignTask(taskId: string, userId: string | null) {
+  await requireCoordinator();
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { assigneeId: userId },
+  });
+  revalidatePath("/");
+  revalidatePath("/atribuir");
+}
+
+export interface AssignableTask {
+  id: string;
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  columnId: string;
+  columnTitle: string;
+  columnColor: string;
+  assignee: { id: string; name: string } | null;
+}
+
+export async function getAssignableTasks(): Promise<AssignableTask[]> {
+  await requireCoordinator();
+
+  const tasks = await prisma.task.findMany({
+    where: { column: { isDone: false } },
+    include: {
+      assignee: { select: { id: true, name: true } },
+      column: { select: { title: true, color: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return tasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+    columnId: task.columnId,
+    columnTitle: task.column.title,
+    columnColor: task.column.color,
+    assignee: task.assignee,
+  }));
+}
+
 interface ColumnOrderPayload {
   columnId: string;
   taskIds: string[];

@@ -1,4 +1,4 @@
-import { Ban, KanbanSquare, ListMusic, Radio, Settings, Users } from "lucide-react";
+import { Ban, KanbanSquare, ListMusic, Radio, Send, Settings, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -10,6 +10,7 @@ export interface NavItem {
 
 export const boardNav: NavItem[] = [
   { title: "Quadro Kanban", href: "/", icon: KanbanSquare },
+  { title: "Atribuir tarefas", href: "/atribuir", icon: Send, coordinatorOnly: true },
   { title: "Administração", href: "/admin", icon: Settings, coordinatorOnly: true },
   { title: "Usuários", href: "/admin/usuarios", icon: Users, coordinatorOnly: true },
 ];
