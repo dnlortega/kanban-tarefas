@@ -19,7 +19,8 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 ### Quadro Kanban (`/`)
 
 - Criar, editar e excluir tarefas (título, descrição, responsável, prazo) — apenas coordenadores
-- Drag and drop entre colunas e reordenação dentro da mesma coluna
+- Drag and drop entre colunas — mas só quem está atribuído à tarefa pode mudar sua situação (nem o coordenador pode arrastar a tarefa de outra pessoa)
+- Clique numa tarefa para ver os detalhes completos: coordenador abre o formulário de edição, responsável abre uma visão somente-leitura
 - Busca por texto e filtro por responsável (desabilita o drag enquanto um filtro está ativo)
 - Autocomplete de título baseado em tarefas já criadas
 - Avatar com iniciais do responsável e indicador visual de tarefa atrasada
@@ -28,11 +29,23 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 - Sincronização entre abas/dispositivos por polling (pausa automaticamente enquanto você arrasta um card ou tem um dialog aberto)
 - Persistência 100% em banco de dados (PostgreSQL via Prisma), sem `localStorage`
 
+### Calendário (`/calendario`)
+
+- Visão mensal estilo agenda, com as tarefas exibidas no dia do prazo
+- Filtro por responsável
+- Coordenador pode arrastar uma tarefa para outro dia (muda o prazo) e clicar numa tarefa para editar os detalhes; responsável só visualiza
+
+### Atribuir tarefas (`/atribuir` — só coordenador)
+
+- Lista as tarefas pendentes de um lado e os usuários do outro; arrastar uma tarefa até uma pessoa a atribui na hora
+- Busca por título e filtro "somente sem responsável"
+
 ### Papéis e permissões
 
-- **Coordenador** — acesso total: cria/edita/exclui tarefas e colunas, atribui responsáveis, gerencia contas de usuário
-- **Responsável** — vê o quadro inteiro, mas só pode arrastar (mudar de coluna) as tarefas atribuídas a ele; não cria, edita ou exclui nada
-- Permissões aplicadas tanto na interface (botões ocultos) quanto no servidor (Server Actions validam o papel do usuário logado)
+- **Coordenador** — cria/edita/exclui tarefas e colunas, atribui responsáveis, gerencia contas de usuário
+- **Responsável** — vê o quadro inteiro, mas só pode ver detalhes (somente-leitura) e mudar a situação das tarefas atribuídas a ele
+- **A situação (coluna) de uma tarefa só muda pela mão de quem está atribuído a ela — essa regra vale até para o coordenador.** Editar título/descrição/responsável/prazo continua sendo só do coordenador.
+- Permissões aplicadas tanto na interface (botões ocultos) quanto no servidor (Server Actions validam o papel e o dono da tarefa)
 
 ### Administração (`/admin`, `/admin/usuarios` — só coordenador)
 
@@ -41,10 +54,11 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 
 ### Jukebox
 
-- **`/jukebox`** — player com a música atual (YouTube IFrame API), avança automaticamente para a próxima da fila ao terminar, botão de pular, reordenar a fila por drag and drop e remover itens
-- **`/jukebox/pedir`** — busca músicas por nome/artista (YouTube Data API v3) e adiciona à fila; pedidos duplicados (mesma música já na fila) são rejeitados
+- **`/jukebox`** — player com a música atual (YouTube IFrame API), controles de tocar/pausar/próxima/anterior, reordenar a fila por drag and drop e remover itens. **Exige login.**
+- **`/jukebox/pedir`** — busca músicas por nome/artista (YouTube Data API v3) e adiciona à fila; pedidos duplicados (mesma música já na fila) são rejeitados. **Não exige login** — pode ser compartilhada com qualquer convidado.
 - **`/jukebox/bloqueios`** — lista de termos bloqueados; músicas cujo título contenha um termo bloqueado não podem ser pedidas nem tocadas
-- Histórico das últimas 10 músicas tocadas
+- Fila justa por rodízio: a próxima música é escolhida comparando quantas vezes cada pessoa já teve música tocada, não só a ordem de chegada — assim quem pediu poucas músicas não fica esperando atrás de quem pediu muitas
+- Histórico das últimas músicas tocadas (ordenado pelo horário real de reprodução, não pelo pedido)
 - Sincronização entre telas por polling (consulta o banco a cada poucos segundos), permitindo usar uma tela para tocar (ex: TV) e outra para pedir (ex: celular)
 
 ### Geral
@@ -52,7 +66,7 @@ Aplicação em Next.js com dois módulos, pronta para rodar localmente ou public
 - Login individual (usuário + senha) por pessoa, com sessão assinada (HMAC) e rate limit de tentativas (5 erradas / 15 min por IP)
 - Instalável como app (PWA) — "Adicionar à tela inicial" no celular
 - Vercel Analytics integrado
-- Sidebar de navegação no desktop (colapsável para ícones); barra de navegação inferior (ícones) no mobile
+- Sidebar de navegação no desktop (colapsável para ícones); barra de navegação inferior no mobile com os itens mais usados + menu "Mais" para o resto
 - Dark mode
 - Design responsivo para desktop e mobile
 
@@ -120,7 +134,7 @@ Acesse [http://localhost:3000](http://localhost:3000).
 
 ## Testes
 
-Testes de ponta a ponta com Playwright, cobrindo login, CRUD de tarefas, busca/filtro e o jukebox:
+Testes de ponta a ponta com Playwright, cobrindo login, CRUD de tarefas, busca/filtro, permissões por papel e o jukebox:
 
 ```bash
 npm test
@@ -154,15 +168,21 @@ Precisa do servidor rodando (o Playwright sobe um automaticamente se nenhum esti
 app/
   (app)/                    Rotas protegidas (com sidebar/header)
     page.tsx                Quadro Kanban (Server Component)
+    calendario/             Calendário mensal
+    atribuir/                Atribuir tarefas por drag and drop (só coordenador)
     admin/                  Administração de colunas
     admin/usuarios/         Administração de usuários (só coordenador)
-    jukebox/                Player, pedido de música e bloqueios
+    jukebox/                Player ("Tocando agora") e bloqueios
+  jukebox/pedir/            Pedido de música — pública, sem exigir login
   login/                    Página de login (usuário + senha, sem sidebar)
   layout.tsx                Layout raiz (tema, toaster, analytics)
+  error.tsx / global-error.tsx / not-found.tsx   Páginas de erro personalizadas
   manifest.ts                Manifest do PWA
-proxy.ts                     Bloqueia acesso sem sessão válida (cookie assinado)
+proxy.ts                     Bloqueia acesso sem sessão válida (exceto /login e /jukebox/pedir)
 components/
-  kanban/                   Board, colunas, cards, dialogs, stats
+  kanban/                   Board, colunas, cards, dialogs (edição e somente-leitura), stats
+  calendar/                 Grade mensal com drag and drop
+  assign/                   Tela de atribuição por drag and drop
   admin/                    Gerenciador de colunas e de usuários
   jukebox/                  Player, formulário de pedido, bloqueios
   ui/                       Componentes shadcn/ui
@@ -173,7 +193,7 @@ lib/
   session.ts                getCurrentUser() / requireCoordinator()
   prisma.ts                 Cliente Prisma (singleton)
   youtube.ts                Integração com YouTube Data API v3
-  nav.ts                    Itens de navegação (sidebar + bottom nav)
+  nav.ts                    Itens de navegação (sidebar + bottom nav, com flag de item "primário")
 prisma/
   schema.prisma             Modelos: User, Column, Task, Track, BlockedSong, LoginAttempt
   seed.ts                   Cria contas de teste (coordenador/membro) e dados iniciais
@@ -194,5 +214,5 @@ Qualquer um funciona — só colar a connection string em `DATABASE_URL`. Modelo
 - **User** — contas de login (nome, usuário, hash da senha, papel: `coordinator` | `member`)
 - **Column** — status configuráveis do Kanban (título, cor, `isDone`, ordem)
 - **Task** — tarefas (título, descrição, responsável via `assigneeId` → User, prazo, coluna, ordem)
-- **Track** — fila de reprodução do jukebox (título, canal, gênero, status: `queued` | `playing` | `done`)
+- **Track** — fila de reprodução do jukebox (título, canal, gênero, `requestedBy`, status: `queued` | `playing` | `done`, `playedAt`)
 - **BlockedSong** — termos bloqueados no jukebox
