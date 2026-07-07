@@ -54,3 +54,12 @@ model BlockedSong {
 
   @@unique([term])
 }
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+}

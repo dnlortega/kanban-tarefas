@@ -2,12 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Music, SkipForward, Trash2 } from "lucide-react";
+import { History, Music, SkipForward, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { advanceQueue, getQueueState, removeFromQueue, skipTrack } from "@/lib/actions/jukebox";
+import {
+  advanceQueue,
+  getQueueState,
+  getRecentlyPlayed,
+  removeFromQueue,
+  skipTrack,
+} from "@/lib/actions/jukebox";
 import type { Track } from "@/types/jukebox";
 
 interface YTPlayerInstance {
@@ -35,11 +41,17 @@ declare global {
 interface JukeboxPlayerProps {
   initialPlaying: Track | null;
   initialQueue: Track[];
+  initialHistory: Track[];
 }
 
-export function JukeboxPlayer({ initialPlaying, initialQueue }: JukeboxPlayerProps) {
+export function JukeboxPlayer({
+  initialPlaying,
+  initialQueue,
+  initialHistory,
+}: JukeboxPlayerProps) {
   const [playing, setPlaying] = useState(initialPlaying);
   const [queue, setQueue] = useState(initialQueue);
+  const [history, setHistory] = useState(initialHistory);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
@@ -50,6 +62,7 @@ export function JukeboxPlayer({ initialPlaying, initialQueue }: JukeboxPlayerPro
     setPlaying(next);
     const state = await getQueueState();
     setQueue(state.queued);
+    setHistory(await getRecentlyPlayed());
   }, []);
 
   useEffect(() => {
@@ -102,6 +115,7 @@ export function JukeboxPlayer({ initialPlaying, initialQueue }: JukeboxPlayerPro
       setPlaying((current) =>
         state.playing?.id !== current?.id ? state.playing : current
       );
+      setHistory(await getRecentlyPlayed());
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -112,6 +126,7 @@ export function JukeboxPlayer({ initialPlaying, initialQueue }: JukeboxPlayerPro
     setPlaying(next);
     const state = await getQueueState();
     setQueue(state.queued);
+    setHistory(await getRecentlyPlayed());
   }
 
   async function handleRemove(id: string) {
@@ -237,6 +252,25 @@ export function JukeboxPlayer({ initialPlaying, initialQueue }: JukeboxPlayerPro
             </p>
           )}
         </div>
+
+        {history.length > 0 && (
+          <>
+            <h2 className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+              <History className="size-3.5" />
+              Tocadas recentemente
+            </h2>
+            <div className="flex flex-col gap-1.5">
+              {history.map((track) => (
+                <div
+                  key={track.id}
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground"
+                >
+                  <span className="min-w-0 flex-1 truncate">{track.title}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

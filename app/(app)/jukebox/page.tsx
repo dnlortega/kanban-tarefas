@@ -1,11 +1,18 @@
-import { ensurePlaybackStarted, getQueueState } from "@/lib/actions/jukebox";
+import {
+  ensurePlaybackStarted,
+  getQueueState,
+  getRecentlyPlayed,
+} from "@/lib/actions/jukebox";
 import { JukeboxPlayer } from "@/components/jukebox/jukebox-player";
 
 export const dynamic = "force-dynamic";
 
 export default async function JukeboxPage() {
   await ensurePlaybackStarted();
-  const { playing, queued } = await getQueueState();
+  const [{ playing, queued }, history] = await Promise.all([
+    getQueueState(),
+    getRecentlyPlayed(),
+  ]);
 
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-background">
@@ -17,7 +24,7 @@ export default async function JukeboxPage() {
           As músicas pedidas em &quot;Pedir música&quot; tocam aqui, em ordem de chegada.
         </p>
       </div>
-      <JukeboxPlayer initialPlaying={playing} initialQueue={queued} />
+      <JukeboxPlayer initialPlaying={playing} initialQueue={queued} initialHistory={history} />
     </main>
   );
 }

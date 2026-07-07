@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -38,6 +38,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import {
   createTask,
   deleteTask,
+  getBoardState,
   syncColumnsOrder,
   updateTask,
 } from "@/lib/actions/tasks";
@@ -98,6 +99,23 @@ export function KanbanBoard({ initialColumns, titleSuggestions }: KanbanBoardPro
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const isBusyRef = useRef(false);
+  useEffect(() => {
+    isBusyRef.current =
+      activeTask !== null || dialogOpen || taskToDeleteId !== null;
+  }, [activeTask, dialogOpen, taskToDeleteId]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (isBusyRef.current) return;
+      const fresh = await getBoardState().catch(() => null);
+      if (fresh && !isBusyRef.current) {
+        setColumns(fresh);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const stats = useMemo(() => {
     const allTasks = columns.flatMap((c) => c.tasks);

@@ -38,6 +38,13 @@ export async function requestTrack(input: RequestTrackInput) {
     throw new Error(`Essa música está bloqueada (termo: "${blockedTerm}").`);
   }
 
+  const alreadyQueued = await prisma.track.findFirst({
+    where: { youtubeId: input.videoId, status: { in: ["queued", "playing"] } },
+  });
+  if (alreadyQueued) {
+    throw new Error("Essa música já está na fila.");
+  }
+
   const last = await prisma.track.findFirst({
     where: { status: "queued" },
     orderBy: { order: "desc" },
@@ -133,4 +140,13 @@ export async function removeFromQueue(trackId: string) {
   await prisma.track.deleteMany({ where: { id: trackId, status: "queued" } });
   revalidatePath("/jukebox");
   revalidatePath("/jukebox/pedir");
+}
+
+export async function getRecentlyPlayed(limit = 10) {
+  const tracks = await prisma.track.findMany({
+    where: { status: "done" },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  return tracks.map(serialize);
 }

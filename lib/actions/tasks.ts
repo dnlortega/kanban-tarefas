@@ -3,7 +3,33 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import type { TaskInput } from "@/types/task";
+import type { ColumnWithTasks, TaskInput } from "@/types/task";
+
+export async function getBoardState(): Promise<ColumnWithTasks[]> {
+  const columns = await prisma.column.findMany({
+    orderBy: { order: "asc" },
+    include: { tasks: { orderBy: { order: "asc" } } },
+  });
+
+  return columns.map((col) => ({
+    id: col.id,
+    title: col.title,
+    color: col.color,
+    isDone: col.isDone,
+    order: col.order,
+    tasks: col.tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      assignee: task.assignee,
+      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+      order: task.order,
+      columnId: task.columnId,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+    })),
+  }));
+}
 
 export async function createTask(input: TaskInput) {
   const last = await prisma.task.findFirst({
