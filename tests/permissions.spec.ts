@@ -19,10 +19,13 @@ test.describe("Permissões de responsável", () => {
   test("não consegue acessar /admin nem /admin/usuarios diretamente", async ({
     page,
   }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL("/");
+    test.setTimeout(60000);
+    // Primeira visita compila as rotas /admin sob demanda (Turbopack), o que
+    // pode ser lento — usa timeout maior e "load" em vez do padrão.
+    await page.goto("/admin", { waitUntil: "load", timeout: 45000 });
+    await expect(page).toHaveURL("/", { timeout: 15000 });
 
-    await page.goto("/admin/usuarios");
-    await expect(page).toHaveURL("/");
+    await page.goto("/admin/usuarios", { waitUntil: "load", timeout: 45000 });
+    await expect(page).toHaveURL("/", { timeout: 15000 });
   });
 });

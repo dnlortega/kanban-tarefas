@@ -19,7 +19,16 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, History, Music, SkipForward, Trash2 } from "lucide-react";
+import {
+  GripVertical,
+  History,
+  Music,
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +38,7 @@ import {
   advanceQueue,
   getQueueState,
   getRecentlyPlayed,
+  playPrevious,
   removeFromQueue,
   reorderQueue,
   skipTrack,
@@ -37,6 +47,8 @@ import type { Track } from "@/types/jukebox";
 
 interface YTPlayerInstance {
   loadVideoById: (videoId: string) => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
 }
 
 interface YTPlayerOptions {
@@ -51,7 +63,7 @@ declare global {
   interface Window {
     YT?: {
       Player: new (el: HTMLElement, options: YTPlayerOptions) => YTPlayerInstance;
-      PlayerState: { ENDED: number };
+      PlayerState: { ENDED: number; PLAYING: number; PAUSED: number };
     };
     onYouTubeIframeAPIReady?: () => void;
   }
@@ -72,6 +84,7 @@ export function JukeboxPlayer({
   const [queue, setQueue] = useState(initialQueue);
   const [history, setHistory] = useState(initialHistory);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
@@ -113,8 +126,13 @@ export function JukeboxPlayer({
             }
           },
           onStateChange: (event) => {
-            if (window.YT && event.data === window.YT.PlayerState.ENDED) {
+            if (!window.YT) return;
+            if (event.data === window.YT.PlayerState.ENDED) {
               handleEnded();
+            } else if (event.data === window.YT.PlayerState.PLAYING) {
+              setIsPlaying(true);
+            } else if (event.data === window.YT.PlayerState.PAUSED) {
+              setIsPlaying(false);
             }
           },
         },
@@ -135,6 +153,7 @@ export function JukeboxPlayer({
   useEffect(() => {
     if (playerRef.current && playing) {
       playerRef.current.loadVideoById(playing.youtubeId);
+      setIsPlaying(true);
     }
   }, [playing]);
 
@@ -161,6 +180,24 @@ export function JukeboxPlayer({
     setHistory(await getRecentlyPlayed());
   }
 
+  async function handlePrevious() {
+    const previous = await playPrevious(playing?.id);
+    if (!previous) return;
+    setPlaying(previous);
+    const state = await getQueueState();
+    setQueue(state.queued);
+    setHistory(await getRecentlyPlayed());
+  }
+
+  function handleTogglePlay() {
+    if (!playerRef.current) return;
+    if (isPlaying) {
+      playerRef.current.pauseVideo();
+    } else {
+      playerRef.current.playVideo();
+    }
+  }
+
   async function handleRemove(id: string) {
     setQueue((q) => q.filter((t) => t.id !== id));
     await removeFromQueue(id);
@@ -182,8 +219,8 @@ export function JukeboxPlayer({
   }
 
   return (
-    <div className="grid flex-1 grid-cols-1 gap-4 p-4 sm:p-6 lg:grid-cols-[1fr_320px]">
-      <div className="flex min-w-0 flex-col gap-3">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 sm:p-6 lg:grid-cols-[1fr_320px]">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto">
         <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
           <div ref={containerRef} className="size-full" />
         </div>
@@ -218,21 +255,53 @@ export function JukeboxPlayer({
                   {playing.requestedBy && ` • Pedido por ${playing.requestedBy}`}
                 </p>
               </div>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      aria-label="Pular música"
-                      onClick={handleSkip}
-                    />
-                  }
-                >
-                  <SkipForward className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent>Pular música</TooltipContent>
-              </Tooltip>
+              <div className="flex shrink-0 items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label="Música anterior"
+                        onClick={handlePrevious}
+                      />
+                    }
+                  >
+                    <SkipBack className="size-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Música anterior</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label={isPlaying ? "Pausar" : "Tocar"}
+                        onClick={handleTogglePlay}
+                      />
+                    }
+                  >
+                    {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+                  </TooltipTrigger>
+                  <TooltipContent>{isPlaying ? "Pausar" : "Tocar"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label="Próxima música"
+                        onClick={handleSkip}
+                      />
+                    }
+                  >
+                    <SkipForward className="size-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Próxima música</TooltipContent>
+                </Tooltip>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -263,7 +332,7 @@ export function JukeboxPlayer({
             items={queue.map((t) => t.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col gap-2 overflow-y-auto">
+            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
               {queue.map((track, index) => (
                 <QueueItem
                   key={track.id}

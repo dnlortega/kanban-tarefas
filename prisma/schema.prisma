@@ -55,6 +55,7 @@ model Track {
   status      String    @default("queued")
   order       Int
   createdAt   DateTime  @default(now())
+  playedAt    DateTime?
 
   @@index([status, order])
 }

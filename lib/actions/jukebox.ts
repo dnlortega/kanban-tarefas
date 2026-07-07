@@ -12,6 +12,51 @@ function serialize(track: PrismaTrack): Track {
   return { ...track, createdAt: track.createdAt.toISOString() };
 }
 
+/**
+ * Picks the next track to play with fair round-robin scheduling across requesters:
+ * each requester's Nth track only competes with everyone else's Nth track, so a
+ * new requester with few past requests jumps ahead of a requester who already had
+ * many turns, instead of waiting behind their whole backlog.
+ */
+async function pickNextQueuedTrack(): Promise<PrismaTrack | null> {
+  const queued = await prisma.track.findMany({
+    where: { status: "queued" },
+    orderBy: { order: "asc" },
+  });
+  if (queued.length <= 1) return queued[0] ?? null;
+
+  const requesters = Array.from(
+    new Set(queued.map((t) => t.requestedBy).filter((r): r is string => Boolean(r)))
+  );
+  if (requesters.length <= 1) return queued[0];
+
+  const history = await prisma.track.findMany({
+    where: { requestedBy: { in: requesters } },
+    select: { id: true, requestedBy: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const roundByTrackId = new Map<string, number>();
+  const counters = new Map<string, number>();
+  for (const row of history) {
+    const key = row.requestedBy as string;
+    const round = counters.get(key) ?? 0;
+    roundByTrackId.set(row.id, round);
+    counters.set(key, round + 1);
+  }
+
+  let best = queued[0];
+  let bestRound = roundByTrackId.get(best.id) ?? 0;
+  for (const track of queued.slice(1)) {
+    const round = roundByTrackId.get(track.id) ?? 0;
+    if (round < bestRound) {
+      best = track;
+      bestRound = round;
+    }
+  }
+  return best;
+}
+
 export async function searchTracks(query: string) {
   const results = await searchYoutube(query);
   const blocked = await prisma.blockedSong.findMany();
@@ -88,15 +133,12 @@ export async function ensurePlaybackStarted() {
   const current = await prisma.track.findFirst({ where: { status: "playing" } });
   if (current) return serialize(current);
 
-  const next = await prisma.track.findFirst({
-    where: { status: "queued" },
-    orderBy: { order: "asc" },
-  });
+  const next = await pickNextQueuedTrack();
   if (!next) return null;
 
   const updated = await prisma.track.update({
     where: { id: next.id },
-    data: { status: "playing" },
+    data: { status: "playing", playedAt: new Date() },
   });
 
   revalidatePath("/jukebox");
@@ -112,17 +154,14 @@ export async function advanceQueue(finishedTrackId?: string) {
     });
   }
 
-  const next = await prisma.track.findFirst({
-    where: { status: "queued" },
-    orderBy: { order: "asc" },
-  });
+  const next = await pickNextQueuedTrack();
 
   let updated: Track | null = null;
   if (next) {
     updated = serialize(
       await prisma.track.update({
         where: { id: next.id },
-        data: { status: "playing" },
+        data: { status: "playing", playedAt: new Date() },
       })
     );
   }
@@ -134,6 +173,34 @@ export async function advanceQueue(finishedTrackId?: string) {
 
 export async function skipTrack(trackId: string) {
   return advanceQueue(trackId);
+}
+
+export async function playPrevious(currentTrackId?: string) {
+  const previous = await prisma.track.findFirst({
+    where: { status: "done" },
+    orderBy: { playedAt: "desc" },
+  });
+  if (!previous) return null;
+
+  if (currentTrackId) {
+    const first = await prisma.track.findFirst({
+      where: { status: "queued" },
+      orderBy: { order: "asc" },
+    });
+    await prisma.track.updateMany({
+      where: { id: currentTrackId, status: "playing" },
+      data: { status: "queued", order: first ? first.order - 1 : 0 },
+    });
+  }
+
+  const updated = await prisma.track.update({
+    where: { id: previous.id },
+    data: { status: "playing", playedAt: new Date() },
+  });
+
+  revalidatePath("/jukebox");
+  revalidatePath("/jukebox/pedir");
+  return serialize(updated);
 }
 
 export async function removeFromQueue(trackId: string) {
@@ -158,7 +225,7 @@ export async function reorderQueue(orderedIds: string[]) {
 export async function getRecentlyPlayed(limit = 10) {
   const tracks = await prisma.track.findMany({
     where: { status: "done" },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ playedAt: "desc" }, { createdAt: "desc" }],
     take: limit,
   });
   return tracks.map(serialize);
