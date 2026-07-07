@@ -16,15 +16,25 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TaskAvatar } from "@/components/kanban/task-avatar";
+import { TaskDialog } from "@/components/kanban/task-dialog";
 import { cn } from "@/lib/utils";
-import { updateTaskDueDate, type CalendarTask } from "@/lib/actions/tasks";
+import { updateTask, updateTaskDueDate, type CalendarTask } from "@/lib/actions/tasks";
+import type { Column as ColumnType, TaskAssignee, TaskInput } from "@/types/task";
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTH_LABELS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
+const ALL_ASSIGNEES = "__all__";
 
 function dayKey(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -62,23 +72,52 @@ interface MonthCalendarProps {
   month: number;
   tasks: CalendarTask[];
   isCoordinator: boolean;
+  columns: ColumnType[];
+  assignableUsers: TaskAssignee[];
+  titleSuggestions: string[];
 }
 
-export function MonthCalendar({ year, month, tasks, isCoordinator }: MonthCalendarProps) {
+export function MonthCalendar({
+  year,
+  month,
+  tasks,
+  isCoordinator,
+  columns,
+  assignableUsers,
+  titleSuggestions,
+}: MonthCalendarProps) {
   const [taskList, setTaskList] = useState(tasks);
+  const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<CalendarTask | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const days = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
+  const assigneeOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const task of taskList) {
+      if (task.assignee) map.set(task.assignee.id, task.assignee.name);
+    }
+    return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [taskList]);
+
+  const filteredTasks = useMemo(() => {
+    if (!assigneeFilter) return taskList;
+    return taskList.filter((t) => t.assignee?.id === assigneeFilter);
+  }, [taskList, assigneeFilter]);
+
   const tasksByDay = useMemo(() => {
     const map = new Map<string, CalendarTask[]>();
-    for (const task of taskList) {
+    for (const task of filteredTasks) {
       const key = task.dueDate.slice(0, 10);
       const list = map.get(key) ?? [];
       list.push(task);
       map.set(key, list);
     }
     return map;
-  }, [taskList]);
+  }, [filteredTasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -100,6 +139,36 @@ export function MonthCalendar({ year, month, tasks, isCoordinator }: MonthCalend
     updateTaskDueDate(taskId, newDueDate)
       .then(() => toast.success(`"${task.title}" reagendada`))
       .catch(() => toast.error("Erro ao mudar o prazo"));
+  }
+
+  function handleOpenTask(task: CalendarTask) {
+    setEditingTask(task);
+    setDialogOpen(true);
+  }
+
+  function handleSubmitEdit(input: TaskInput) {
+    if (!editingTask) return;
+    const id = editingTask.id;
+    const assignee = input.assigneeId
+      ? (assignableUsers.find((u) => u.id === input.assigneeId) ?? null)
+      : null;
+
+    setTaskList((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              title: input.title,
+              description: input.description ?? null,
+              assignee,
+              dueDate: input.dueDate ?? t.dueDate,
+            }
+          : t
+      )
+    );
+    updateTask(id, input)
+      .then(() => toast.success("Tarefa atualizada"))
+      .catch(() => toast.error("Erro ao atualizar tarefa"));
   }
 
   const prevMonth = month === 0 ? { y: year - 1, m: 12 } : { y: year, m: month };
@@ -124,6 +193,7 @@ export function MonthCalendar({ year, month, tasks, isCoordinator }: MonthCalend
             isToday={isToday(day)}
             tasks={tasksByDay.get(dayKey(day)) ?? []}
             draggable={isCoordinator}
+            onOpenTask={isCoordinator ? handleOpenTask : undefined}
           />
         ))}
       </div>
@@ -132,61 +202,85 @@ export function MonthCalendar({ year, month, tasks, isCoordinator }: MonthCalend
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4 sm:p-6">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">
           {MONTH_LABELS[month]} {year}
         </h2>
-        <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label="Mês anterior"
-                  nativeButton={false}
-                  render={<Link href={`/calendario?y=${prevMonth.y}&m=${prevMonth.m}`} />}
-                />
-              }
-            >
-              <ChevronLeft className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>Mês anterior</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  aria-label="Hoje"
-                  nativeButton={false}
-                  render={
-                    <Link href={`/calendario?y=${now.getFullYear()}&m=${now.getMonth() + 1}`} />
-                  }
-                />
-              }
-            >
-              Hoje
-            </TooltipTrigger>
-            <TooltipContent>Ir para hoje</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label="Próximo mês"
-                  nativeButton={false}
-                  render={<Link href={`/calendario?y=${nextMonth.y}&m=${nextMonth.m}`} />}
-                />
-              }
-            >
-              <ChevronRight className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>Próximo mês</TooltipContent>
-          </Tooltip>
+        <div className="flex items-center gap-2">
+          <Select
+            items={[
+              { value: ALL_ASSIGNEES, label: "Todos os responsáveis" },
+              ...assigneeOptions.map((u) => ({ value: u.id, label: u.name })),
+            ]}
+            value={assigneeFilter ?? ALL_ASSIGNEES}
+            onValueChange={(value) =>
+              setAssigneeFilter(value === ALL_ASSIGNEES ? null : value)
+            }
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ASSIGNEES}>Todos os responsáveis</SelectItem>
+              {assigneeOptions.map((u) => (
+                <SelectItem key={u.id} value={u.id}>
+                  {u.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label="Mês anterior"
+                    nativeButton={false}
+                    render={<Link href={`/calendario?y=${prevMonth.y}&m=${prevMonth.m}`} />}
+                  />
+                }
+              >
+                <ChevronLeft className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent>Mês anterior</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="Hoje"
+                    nativeButton={false}
+                    render={
+                      <Link href={`/calendario?y=${now.getFullYear()}&m=${now.getMonth() + 1}`} />
+                    }
+                  />
+                }
+              >
+                Hoje
+              </TooltipTrigger>
+              <TooltipContent>Ir para hoje</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label="Próximo mês"
+                    nativeButton={false}
+                    render={<Link href={`/calendario?y=${nextMonth.y}&m=${nextMonth.m}`} />}
+                  />
+                }
+              >
+                <ChevronRight className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent>Próximo mês</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </div>
 
@@ -196,6 +290,19 @@ export function MonthCalendar({ year, month, tasks, isCoordinator }: MonthCalend
         </DndContext>
       ) : (
         grid
+      )}
+
+      {isCoordinator && (
+        <TaskDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          task={editingTask}
+          defaultColumnId={editingTask?.columnId ?? columns[0]?.id ?? ""}
+          columns={columns}
+          assignableUsers={assignableUsers}
+          titleSuggestions={titleSuggestions}
+          onSubmit={handleSubmitEdit}
+        />
       )}
     </div>
   );
@@ -207,9 +314,10 @@ interface DayCellProps {
   isToday: boolean;
   tasks: CalendarTask[];
   draggable: boolean;
+  onOpenTask?: (task: CalendarTask) => void;
 }
 
-function DayCell({ day, isCurrentMonth, isToday, tasks, draggable }: DayCellProps) {
+function DayCell({ day, isCurrentMonth, isToday, tasks, draggable, onOpenTask }: DayCellProps) {
   const { setNodeRef, isOver } = useDroppable({ id: dayKey(day), disabled: !draggable });
 
   return (
@@ -236,7 +344,7 @@ function DayCell({ day, isCurrentMonth, isToday, tasks, draggable }: DayCellProp
       <div className="flex flex-col gap-1 overflow-y-auto">
         {tasks.map((task) =>
           draggable ? (
-            <DraggableTaskChip key={task.id} task={task} />
+            <DraggableTaskChip key={task.id} task={task} onOpen={onOpenTask} />
           ) : (
             <TaskChip key={task.id} task={task} />
           )
@@ -263,7 +371,13 @@ function TaskChip({ task }: { task: CalendarTask }) {
   );
 }
 
-function DraggableTaskChip({ task }: { task: CalendarTask }) {
+function DraggableTaskChip({
+  task,
+  onOpen,
+}: {
+  task: CalendarTask;
+  onOpen?: (task: CalendarTask) => void;
+}) {
   const { setNodeRef, attributes, listeners, transform, isDragging } = useDraggable({
     id: task.id,
   });
@@ -277,6 +391,7 @@ function DraggableTaskChip({ task }: { task: CalendarTask }) {
       ref={setNodeRef}
       style={style}
       className={cn("touch-none cursor-grab select-none active:cursor-grabbing", isDragging && "opacity-40 z-10")}
+      onClick={() => onOpen?.(task)}
       {...attributes}
       {...listeners}
     >
