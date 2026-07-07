@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -38,6 +38,7 @@ model Track {
   title       String
   channel     String?
   thumbnail   String?
+  genre       String?
   requestedBy String?
   status      String    @default("queued")
   order       Int

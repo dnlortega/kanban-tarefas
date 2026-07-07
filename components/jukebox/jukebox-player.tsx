@@ -145,6 +145,11 @@ export function JukeboxPlayer({ initialPlaying, initialQueue }: JukeboxPlayerPro
                     <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
                   </span>
                   <p className="truncate font-medium">{playing.title}</p>
+                  {playing.genre && (
+                    <span className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground capitalize">
+                      {playing.genre}
+                    </span>
+                  )}
                 </div>
                 <p className="truncate text-sm text-muted-foreground">
                   {playing.channel}

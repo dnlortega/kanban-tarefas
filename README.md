@@ -1,18 +1,18 @@
 # Central de Tarefas & Jukebox
 
-Aplicação local em Next.js com dois módulos:
+Aplicação em Next.js com dois módulos, pronta para rodar localmente ou publicada na Vercel:
 
 - **Quadro Kanban** — gerenciamento de tarefas com colunas configuráveis, drag and drop, responsáveis, prazos e um mini-dashboard de estatísticas.
-- **Jukebox** — fila de músicas do YouTube: uma tela "tocando agora" reproduz em ordem de chegada as músicas pedidas em outra tela, com lista de termos bloqueados.
+- **Jukebox** — fila de músicas do YouTube: uma tela "tocando agora" reproduz em ordem de chegada as músicas pedidas em outra tela, com lista de termos bloqueados e identificação do estilo musical.
 
 ## Stack
 
 - [Next.js 16](https://nextjs.org/) (App Router, Server Actions, Server Components)
 - [React 19](https://react.dev/) + TypeScript
 - [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) (estilo `base-nova`, sobre [Base UI](https://base-ui.com/))
-- [Prisma](https://www.prisma.io/) + SQLite (banco local, arquivo `prisma/dev.db`)
+- [Prisma](https://www.prisma.io/) + PostgreSQL (funciona com qualquer Postgres — Vercel Postgres/Neon, Supabase, etc.)
 - [@dnd-kit](https://dndkit.com/) para drag and drop
-- [YouTube Data API v3](https://developers.google.com/youtube/v3) para busca de músicas + [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference) para reprodução
+- [YouTube Data API v3](https://developers.google.com/youtube/v3) para busca de músicas (com estilo/gênero via topic categories) + [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference) para reprodução
 
 ## Funcionalidades
 
@@ -54,15 +54,15 @@ npm install
 
 ### 2. Configurar variáveis de ambiente
 
-Copie o template e ajuste se necessário:
+Copie o template:
 
 ```bash
 cp .env.example .env
 ```
 
-O `DATABASE_URL` padrão (`file:./dev.db`) já funciona sem alterações.
+Preencha `DATABASE_URL` com uma connection string do Postgres (veja [Banco de dados](#banco-de-dados) abaixo para como criar uma gratuita).
 
-Para a busca de músicas por nome no jukebox, adicione sua chave da YouTube Data API v3 em `.env` (ou `.env.local`):
+Para a busca de músicas por nome no jukebox, adicione sua chave da YouTube Data API v3:
 
 ```
 YOUTUBE_API_KEY=sua_chave_aqui
@@ -76,7 +76,7 @@ Veja o passo a passo em [docs/youtube-api-key.md](docs/youtube-api-key.md). Sem 
 npx prisma migrate dev
 ```
 
-Isso cria o banco `prisma/dev.db`, aplica as migrations e popula colunas/tarefas de exemplo (o seed só roda se o banco estiver vazio).
+Isso aplica as migrations no banco Postgres configurado e popula colunas/tarefas de exemplo (o seed só roda se o banco estiver vazio).
 
 ### 4. Rodar em desenvolvimento
 
@@ -94,7 +94,15 @@ Acesse [http://localhost:3000](http://localhost:3000).
 
 1. Descubra o IP local desta máquina: no Windows, `ipconfig` (procure "Endereço IPv4", algo como `192.168.x.x`).
 2. No outro dispositivo, acesse `http://SEU_IP:3000` (ex: `http://192.168.1.10:3000`).
-3. Se não conectar, o Firewall do Windows pode estar bloqueando. Ao rodar `npm run dev` pela primeira vez, o Windows deve perguntar se permite o Node.js na rede — escolha "Permitir acesso". Se não perguntar, libere manualmente em *Painel de Controle → Firewall do Windows Defender → Permitir um aplicativo* (ou crie uma regra para a porta 3000/TCP).
+3. Se não conectar, o Firewall do Windows pode estar bloqueando. Ao rodar `npm run dev` pela primeira vez, o Windows deve perguntar se permite o Node.js na rede — escolha "Permitir acesso". Se não perguntar, libere manualmente em *Painel de Controle → Firewall do Windows Defender → Permitir um aplicativo* (ou rode como administrador: `New-NetFirewallRule -DisplayName "Next.js Dev" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow -Profile Private`).
+
+## Deploy na Vercel
+
+1. Importe o repositório em [vercel.com/new](https://vercel.com/new).
+2. Crie um banco Postgres em **Storage → Create Database → Postgres** — a Vercel já injeta `DATABASE_URL` automaticamente no projeto.
+3. Em **Settings → Environment Variables**, adicione `YOUTUBE_API_KEY` (a `DATABASE_URL` já vem do passo 2).
+4. Rode `npx prisma migrate deploy` localmente apontando para essa mesma `DATABASE_URL` (ou configure como build step) para aplicar as migrations no banco de produção antes do primeiro deploy.
+5. O `postinstall` (`prisma generate`) já roda automaticamente no build da Vercel.
 
 ## Scripts
 
@@ -132,9 +140,15 @@ types/                      Tipos compartilhados (task, jukebox)
 
 ## Banco de dados
 
-SQLite local (`prisma/dev.db`), sem necessidade de serviço externo. Modelos principais:
+PostgreSQL (via Prisma). Para criar um gratuito:
+
+- **Vercel Postgres** (Neon) — Storage → Create Database → Postgres, no dashboard da Vercel
+- **[Neon](https://neon.tech/)** diretamente
+- **[Supabase](https://supabase.com/)**
+
+Qualquer um funciona — só colar a connection string em `DATABASE_URL`. Modelos principais:
 
 - **Column** — status configuráveis do Kanban (título, cor, `isDone`, ordem)
 - **Task** — tarefas (título, descrição, responsável, prazo, coluna, ordem)
-- **Track** — fila de reprodução do jukebox (status: `queued` | `playing` | `done`)
+- **Track** — fila de reprodução do jukebox (título, canal, gênero, status: `queued` | `playing` | `done`)
 - **BlockedSong** — termos bloqueados no jukebox

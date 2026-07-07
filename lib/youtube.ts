@@ -3,6 +3,43 @@ export interface YoutubeSearchResult {
   title: string;
   channel: string;
   thumbnail: string;
+  genre?: string;
+}
+
+function humanizeTopic(topicUrl: string): string {
+  const slug = topicUrl.split("/").pop() ?? "";
+  return decodeURIComponent(slug).replace(/_/g, " ");
+}
+
+async function fetchGenresByVideoId(
+  videoIds: string[],
+  apiKey: string
+): Promise<Record<string, string | undefined>> {
+  if (videoIds.length === 0) return {};
+
+  const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+  url.searchParams.set("part", "topicDetails");
+  url.searchParams.set("id", videoIds.join(","));
+  url.searchParams.set("key", apiKey);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) return {};
+
+  const data = await res.json();
+
+  interface VideosApiItem {
+    id: string;
+    topicDetails?: { topicCategories?: string[] };
+  }
+
+  const genreById: Record<string, string | undefined> = {};
+  for (const item of data.items as VideosApiItem[]) {
+    const topics = item.topicDetails?.topicCategories ?? [];
+    const preferred =
+      topics.find((t) => !t.toLowerCase().endsWith("/music")) ?? topics[0];
+    genreById[item.id] = preferred ? humanizeTopic(preferred) : undefined;
+  }
+  return genreById;
 }
 
 export async function searchYoutube(query: string): Promise<YoutubeSearchResult[]> {
@@ -37,11 +74,18 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchResult[
     };
   }
 
-  return (data.items as YoutubeApiItem[]).map((item) => ({
+  const items = data.items as YoutubeApiItem[];
+  const genreById: Record<string, string | undefined> = await fetchGenresByVideoId(
+    items.map((item) => item.id.videoId),
+    apiKey
+  ).catch(() => ({}));
+
+  return items.map((item) => ({
     videoId: item.id.videoId,
     title: item.snippet.title,
     channel: item.snippet.channelTitle,
     thumbnail:
       item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.default?.url ?? "",
+    genre: genreById[item.id.videoId],
   }));
 }

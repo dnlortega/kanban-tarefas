@@ -28,6 +28,7 @@ interface RequestTrackInput {
   title: string;
   channel?: string;
   thumbnail?: string;
+  genre?: string;
   requestedBy?: string;
 }
 
@@ -48,6 +49,7 @@ export async function requestTrack(input: RequestTrackInput) {
       title: input.title,
       channel: input.channel || null,
       thumbnail: input.thumbnail || null,
+      genre: input.genre || null,
       requestedBy: input.requestedBy || null,
       status: "queued",
       order: last ? last.order + 1 : 0,

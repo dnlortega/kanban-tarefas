@@ -4,6 +4,7 @@ export interface Track {
   title: string;
   channel: string | null;
   thumbnail: string | null;
+  genre: string | null;
   requestedBy: string | null;
   status: string;
   order: number;
@@ -15,5 +16,6 @@ export interface YoutubeSearchResultWithBlock {
   title: string;
   channel: string;
   thumbnail: string;
+  genre?: string;
   blocked: boolean;
 }

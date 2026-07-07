@@ -69,6 +69,7 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
         title: result.title,
         channel: result.channel,
         thumbnail: result.thumbnail,
+        genre: result.genre,
         requestedBy: name.trim() || undefined,
       });
       setQueue((q) => [...q, track]);
@@ -128,9 +129,16 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{result.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {result.channel}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-xs text-muted-foreground">
+                      {result.channel}
+                    </p>
+                    {result.genre && (
+                      <span className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground capitalize">
+                        {result.genre}
+                      </span>
+                    )}
+                  </div>
                   {result.blocked && (
                     <p className="text-xs text-destructive">
                       Bloqueada pelo administrador
@@ -164,9 +172,16 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
           Tocando agora
         </h2>
         <Card>
-          <CardContent className="p-3 text-sm">
+          <CardContent className="flex items-center gap-2 p-3 text-sm">
             {playing ? (
-              <span className="font-medium">{playing.title}</span>
+              <>
+                <span className="font-medium">{playing.title}</span>
+                {playing.genre && (
+                  <span className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground capitalize">
+                    {playing.genre}
+                  </span>
+                )}
+              </>
             ) : (
               <span className="text-muted-foreground">Nada tocando ainda</span>
             )}
