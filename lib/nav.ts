@@ -7,6 +7,7 @@ import {
   Radio,
   Send,
   Settings,
+  Tv,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -33,6 +34,7 @@ export const jukeboxNav: NavItem[] = [
   { title: "Tocando agora", href: "/jukebox", icon: Radio, primary: true },
   { title: "Pedir música", href: "/jukebox/pedir", icon: ListMusic, primary: true },
   { title: "Bloqueios", href: "/jukebox/bloqueios", icon: Ban },
+  { title: "Twitch", href: "/twitch", icon: Tv },
 ];
 
 export const allNav: NavItem[] = [...boardNav, ...jukeboxNav];
