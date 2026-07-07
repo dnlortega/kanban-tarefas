@@ -1,22 +1,25 @@
 "use client";
 
+import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarClock, GripVertical, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { TaskAvatar } from "@/components/kanban/task-avatar";
+import { cn, formatDate, isOverdue } from "@/lib/utils";
 import type { Task } from "@/types/task";
 
 interface TaskCardProps {
   task: Task;
+  isDoneColumn: boolean;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   overlay?: boolean;
 }
 
-export function TaskCard({ task, onEdit, onDelete, overlay }: TaskCardProps) {
+function TaskCardImpl({ task, isDoneColumn, onEdit, onDelete, overlay }: TaskCardProps) {
   const {
     setNodeRef,
     attributes,
@@ -26,7 +29,7 @@ export function TaskCard({ task, onEdit, onDelete, overlay }: TaskCardProps) {
     isDragging,
   } = useSortable({
     id: task.id,
-    data: { type: "task", status: task.status },
+    data: { type: "task", columnId: task.columnId },
   });
 
   const style = {
@@ -34,12 +37,14 @@ export function TaskCard({ task, onEdit, onDelete, overlay }: TaskCardProps) {
     transition,
   };
 
+  const overdue = isOverdue(task.dueDate, isDoneColumn);
+
   return (
     <Card
       ref={overlay ? undefined : setNodeRef}
       style={overlay ? undefined : style}
       className={cn(
-        "group gap-0 py-0 transition-shadow",
+        "group animate-in fade-in slide-in-from-bottom-1 gap-0 py-0 duration-300 transition-shadow hover:shadow-md",
         isDragging && "opacity-40",
         overlay && "rotate-2 shadow-lg"
       )}
@@ -60,9 +65,35 @@ export function TaskCard({ task, onEdit, onDelete, overlay }: TaskCardProps) {
             {task.title}
           </p>
           {task.description && (
-            <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
               {task.description}
             </p>
+          )}
+
+          {(task.assignee || task.dueDate) && (
+            <div className="mt-2 flex items-center gap-2">
+              {task.assignee && (
+                <div className="flex items-center gap-1">
+                  <TaskAvatar name={task.assignee} />
+                  <span className="text-xs text-muted-foreground">
+                    {task.assignee}
+                  </span>
+                </div>
+              )}
+              {task.dueDate && (
+                <span
+                  className={cn(
+                    "ml-auto inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                    overdue
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  <CalendarClock className="size-3" />
+                  {formatDate(task.dueDate)}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
@@ -90,3 +121,5 @@ export function TaskCard({ task, onEdit, onDelete, overlay }: TaskCardProps) {
     </Card>
   );
 }
+
+export const TaskCard = memo(TaskCardImpl);

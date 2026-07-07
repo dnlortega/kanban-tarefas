@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Central de Tarefas & Jukebox
 
-## Getting Started
+Aplicação local em Next.js com dois módulos:
 
-First, run the development server:
+- **Quadro Kanban** — gerenciamento de tarefas com colunas configuráveis, drag and drop, responsáveis, prazos e um mini-dashboard de estatísticas.
+- **Jukebox** — fila de músicas do YouTube: uma tela "tocando agora" reproduz em ordem de chegada as músicas pedidas em outra tela, com lista de termos bloqueados.
+
+## Stack
+
+- [Next.js 16](https://nextjs.org/) (App Router, Server Actions, Server Components)
+- [React 19](https://react.dev/) + TypeScript
+- [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) (estilo `base-nova`, sobre [Base UI](https://base-ui.com/))
+- [Prisma](https://www.prisma.io/) + SQLite (banco local, arquivo `prisma/dev.db`)
+- [@dnd-kit](https://dndkit.com/) para drag and drop
+- [YouTube Data API v3](https://developers.google.com/youtube/v3) para busca de músicas + [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference) para reprodução
+
+## Funcionalidades
+
+### Quadro Kanban (`/`)
+
+- Criar, editar e excluir tarefas (título, descrição, responsável, prazo)
+- Drag and drop entre colunas e reordenação dentro da mesma coluna
+- Autocomplete de título baseado em tarefas já criadas
+- Avatar com iniciais do responsável e indicador visual de tarefa atrasada
+- Mini-dashboard: total de tarefas, concluídas e atrasadas
+- Botão para enviar um resumo das tarefas concluídas por e-mail (abre o cliente de e-mail padrão)
+- Persistência 100% em banco de dados (SQLite via Prisma), sem `localStorage`
+
+### Administração de colunas (`/admin`)
+
+- Colunas (status) são totalmente configuráveis: criar, renomear, escolher cor, marcar como "coluna de conclusão" e reordenar
+- Uma coluna só pode ser excluída se estiver vazia
+
+### Jukebox
+
+- **`/jukebox`** — player com a música atual (YouTube IFrame API), avança automaticamente para a próxima da fila ao terminar, botão de pular e remover itens da fila
+- **`/jukebox/pedir`** — busca músicas por nome/artista (YouTube Data API v3) e adiciona à fila
+- **`/jukebox/bloqueios`** — lista de termos bloqueados; músicas cujo título contenha um termo bloqueado não podem ser pedidas nem tocadas
+- Sincronização entre telas por polling (consulta o banco a cada poucos segundos), permitindo usar uma tela para tocar (ex: TV) e outra para pedir (ex: celular)
+
+### Geral
+
+- Sidebar de navegação no desktop; barra de navegação inferior (ícones) no mobile
+- Dark mode
+- Design responsivo para desktop e mobile
+
+## Setup
+
+### 1. Instalar dependências
+
+```bash
+npm install
+```
+
+### 2. Configurar variáveis de ambiente
+
+Copie o template e ajuste se necessário:
+
+```bash
+cp .env.example .env
+```
+
+O `DATABASE_URL` padrão (`file:./dev.db`) já funciona sem alterações.
+
+Para a busca de músicas por nome no jukebox, adicione sua chave da YouTube Data API v3 em `.env` (ou `.env.local`):
+
+```
+YOUTUBE_API_KEY=sua_chave_aqui
+```
+
+Veja o passo a passo em [docs/youtube-api-key.md](docs/youtube-api-key.md). Sem a chave, o restante do sistema (Kanban, admin, player, bloqueios) funciona normalmente — só a busca por nome fica indisponível.
+
+### 3. Rodar migrations e seed
+
+```bash
+npx prisma migrate dev
+```
+
+Isso cria o banco `prisma/dev.db`, aplica as migrations e popula colunas/tarefas de exemplo (o seed só roda se o banco estiver vazio).
+
+### 4. Rodar em desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento (Turbopack) |
+| `npm run build` | Build de produção |
+| `npm run start` | Roda o build de produção |
+| `npm run lint` | ESLint |
+| `npx prisma studio` | Interface visual para o banco de dados |
+| `npx prisma migrate dev` | Cria/aplica migrations |
 
-## Learn More
+## Estrutura do projeto
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/
+  page.tsx                  Quadro Kanban (Server Component)
+  admin/                    Administração de colunas
+  jukebox/                  Player, pedido de música e bloqueios
+components/
+  kanban/                   Board, colunas, cards, dialogs, stats
+  admin/                    Gerenciador de colunas
+  jukebox/                  Player, formulário de pedido, bloqueios
+  ui/                       Componentes shadcn/ui
+lib/
+  actions/                  Server Actions (tasks, columns, jukebox, blocklist)
+  prisma.ts                 Cliente Prisma (singleton)
+  youtube.ts                Integração com YouTube Data API v3
+  nav.ts                    Itens de navegação (sidebar + bottom nav)
+prisma/
+  schema.prisma             Modelos: Column, Task, Track, BlockedSong
+  seed.ts                   Dados iniciais
+types/                      Tipos compartilhados (task, jukebox)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Banco de dados
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+SQLite local (`prisma/dev.db`), sem necessidade de serviço externo. Modelos principais:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Column** — status configuráveis do Kanban (título, cor, `isDone`, ordem)
+- **Task** — tarefas (título, descrição, responsável, prazo, coluna, ordem)
+- **Track** — fila de reprodução do jukebox (status: `queued` | `playing` | `done`)
+- **BlockedSong** — termos bloqueados no jukebox

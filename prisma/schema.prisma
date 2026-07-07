@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Column {
+  id        String   @id @default(cuid())
+  title     String
+  color     String   @default("#6b7280")
+  isDone    Boolean  @default(false)
+  order     Int
+  tasks     Task[]
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  assignee    String?
+  dueDate     DateTime?
+  order       Int
+  column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  columnId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([columnId, order])
+}
+
+model Track {
+  id          String    @id @default(cuid())
+  youtubeId   String
+  title       String
+  channel     String?
+  thumbnail   String?
+  requestedBy String?
+  status      String    @default("queued")
+  order       Int
+  createdAt   DateTime  @default(now())
+
+  @@index([status, order])
+}
+
+model BlockedSong {
+  id        String   @id @default(cuid())
+  term      String
+  createdAt DateTime @default(now())
+
+  @@unique([term])
+}

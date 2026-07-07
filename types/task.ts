@@ -1,22 +1,31 @@
-export type TaskStatus = "todo" | "doing" | "done";
+export interface Column {
+  id: string;
+  title: string;
+  color: string;
+  isDone: boolean;
+  order: number;
+}
 
 export interface Task {
   id: string;
   title: string;
-  description?: string;
-  status: TaskStatus;
-  createdAt: number;
+  description: string | null;
+  assignee: string | null;
+  dueDate: string | null;
+  order: number;
+  columnId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type TaskInput = Pick<Task, "title" | "description" | "status">;
+export interface ColumnWithTasks extends Column {
+  tasks: Task[];
+}
 
-export interface ColumnDefinition {
-  id: TaskStatus;
+export interface TaskInput {
   title: string;
+  description?: string;
+  assignee?: string;
+  dueDate?: string;
+  columnId: string;
 }
-
-export const COLUMNS: ColumnDefinition[] = [
-  { id: "todo", title: "A Fazer" },
-  { id: "doing", title: "Fazendo" },
-  { id: "done", title: "Concluído" },
-];

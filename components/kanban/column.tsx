@@ -1,29 +1,24 @@
 "use client";
 
+import { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ColumnDefinition, Task } from "@/types/task";
+import type { Column as ColumnType, Task } from "@/types/task";
 import { TaskCard } from "@/components/kanban/task-card";
 
 interface ColumnProps {
-  column: ColumnDefinition;
+  column: ColumnType;
   tasks: Task[];
-  onAddTask: (status: ColumnDefinition["id"]) => void;
+  onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
 }
 
-const DOT_STYLES: Record<ColumnDefinition["id"], string> = {
-  todo: "bg-muted-foreground/50",
-  doing: "bg-amber-500",
-  done: "bg-emerald-500",
-};
-
-export function Column({
+function ColumnImpl({
   column,
   tasks,
   onAddTask,
@@ -32,16 +27,19 @@ export function Column({
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
-    data: { type: "column", status: column.id },
+    data: { type: "column", columnId: column.id },
   });
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col rounded-xl border bg-muted/30 sm:w-80 sm:shrink-0">
       <div className="flex items-center justify-between gap-2 px-3 py-3">
-        <div className="flex items-center gap-2">
-          <span className={cn("size-2 rounded-full", DOT_STYLES[column.id])} />
-          <h2 className="text-sm font-semibold">{column.title}</h2>
-          <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: column.color }}
+          />
+          <h2 className="truncate text-sm font-semibold">{column.title}</h2>
+          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
             {tasks.length}
           </span>
         </div>
@@ -71,6 +69,7 @@ export function Column({
             <TaskCard
               key={task.id}
               task={task}
+              isDoneColumn={column.isDone}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
             />
@@ -86,3 +85,5 @@ export function Column({
     </div>
   );
 }
+
+export const Column = memo(ColumnImpl);
