@@ -11,6 +11,18 @@ function humanizeTopic(topicUrl: string): string {
   return decodeURIComponent(slug).replace(/_/g, " ");
 }
 
+const HTML_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&lt;": "<",
+  "&gt;": ">",
+};
+
+function decodeHtmlEntities(text: string): string {
+  return text.replace(/&amp;|&quot;|&#39;|&lt;|&gt;/g, (m) => HTML_ENTITIES[m]);
+}
+
 async function fetchGenresByVideoId(
   videoIds: string[],
   apiKey: string
@@ -66,7 +78,7 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchResult[
   const data = await res.json();
 
   interface YoutubeApiItem {
-    id: { videoId: string };
+    id: { videoId?: string };
     snippet: {
       title: string;
       channelTitle: string;
@@ -74,7 +86,10 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchResult[
     };
   }
 
-  const items = data.items as YoutubeApiItem[];
+  const items = (data.items as YoutubeApiItem[]).filter(
+    (item): item is YoutubeApiItem & { id: { videoId: string } } =>
+      Boolean(item.id?.videoId)
+  );
   const genreById: Record<string, string | undefined> = await fetchGenresByVideoId(
     items.map((item) => item.id.videoId),
     apiKey
@@ -82,8 +97,8 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchResult[
 
   return items.map((item) => ({
     videoId: item.id.videoId,
-    title: item.snippet.title,
-    channel: item.snippet.channelTitle,
+    title: decodeHtmlEntities(item.snippet.title),
+    channel: decodeHtmlEntities(item.snippet.channelTitle),
     thumbnail:
       item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.default?.url ?? "",
     genre: genreById[item.id.videoId],
