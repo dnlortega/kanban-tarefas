@@ -34,10 +34,11 @@ export async function createUser(input: CreateUserInput) {
   await requireCoordinator();
 
   const username = input.username.trim().toLowerCase();
-  if (!username || !input.name.trim() || !input.password) {
+  const password = input.password.trim();
+  if (!username || !input.name.trim() || !password) {
     throw new Error("Preencha nome, usuário e senha.");
   }
-  if (input.password.length < 6) {
+  if (password.length < 6) {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
 
@@ -46,7 +47,7 @@ export async function createUser(input: CreateUserInput) {
     throw new Error("Já existe um usuário com esse nome de usuário.");
   }
 
-  const passwordHash = await hashPassword(input.password);
+  const passwordHash = await hashPassword(password);
 
   const user = await prisma.user.create({
     data: {
@@ -78,7 +79,8 @@ export async function updateUser(id: string, input: UpdateUserInput) {
   if (!input.name.trim()) {
     throw new Error("Informe um nome.");
   }
-  if (input.password && input.password.length < 6) {
+  const password = input.password?.trim();
+  if (password && password.length < 6) {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
 
@@ -87,7 +89,7 @@ export async function updateUser(id: string, input: UpdateUserInput) {
     data: {
       name: input.name.trim(),
       role: input.role,
-      ...(input.password ? { passwordHash: await hashPassword(input.password) } : {}),
+      ...(password ? { passwordHash: await hashPassword(password) } : {}),
     },
   });
 

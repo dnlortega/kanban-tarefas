@@ -25,40 +25,52 @@ export async function login(
   formData: FormData
 ): Promise<LoginState | undefined> {
   const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  const password = String(formData.get("password") ?? "").trim();
   const from = String(formData.get("from") ?? "/");
 
-  const ip = await getClientIp();
-  const windowStart = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000);
+  if (!username || !password) {
+    return { error: "Informe usuário e senha." };
+  }
 
-  const recentFailures = await prisma.loginAttempt.count({
-    where: { ip, success: false, createdAt: { gte: windowStart } },
-  });
+  try {
+    const ip = await getClientIp();
+    const windowStart = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000);
 
-  if (recentFailures >= MAX_ATTEMPTS) {
+    const recentFailures = await prisma.loginAttempt.count({
+      where: { ip, success: false, createdAt: { gte: windowStart } },
+    });
+
+    if (recentFailures >= MAX_ATTEMPTS) {
+      return {
+        error: `Muitas tentativas. Tente novamente em ${WINDOW_MINUTES} minutos.`,
+      };
+    }
+
+    const user = await prisma.user.findUnique({ where: { username } });
+    const valid = user ? await verifyPassword(password, user.passwordHash) : false;
+
+    if (!user || !valid) {
+      await prisma.loginAttempt.create({ data: { ip, success: false } });
+      return { error: "Usuário ou senha incorretos" };
+    }
+
+    await prisma.loginAttempt.create({ data: { ip, success: true } });
+
+    const token = await createSessionToken({ userId: user.id });
+    (await cookies()).set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+  } catch (err) {
+    console.error("Erro no login:", err);
     return {
-      error: `Muitas tentativas. Tente novamente em ${WINDOW_MINUTES} minutos.`,
+      error:
+        "Não foi possível entrar agora (erro no servidor). Tente novamente em instantes.",
     };
   }
-
-  const user = await prisma.user.findUnique({ where: { username } });
-  const valid = user ? await verifyPassword(password, user.passwordHash) : false;
-
-  if (!user || !valid) {
-    await prisma.loginAttempt.create({ data: { ip, success: false } });
-    return { error: "Usuário ou senha incorretos" };
-  }
-
-  await prisma.loginAttempt.create({ data: { ip, success: true } });
-
-  const token = await createSessionToken({ userId: user.id });
-  (await cookies()).set(AUTH_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-  });
 
   redirect(from);
 }
