@@ -6,6 +6,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PwaInstaller } from "@/components/pwa-installer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
         >
           <TooltipProvider delay={200}>
             {children}
+            <PwaInstaller />
             <Toaster richColors position="bottom-right" />
           </TooltipProvider>
         </ThemeProvider>

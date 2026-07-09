@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Logo } from "@/components/logo";
 import { allNav } from "@/lib/nav";
 import { logout } from "@/lib/actions/auth";
+import { PwaInstallButton } from "@/components/pwa-install-button";
 
 interface AppHeaderProps {
   userName: string;
@@ -30,19 +31,20 @@ export function AppHeader({ userName }: AppHeaderProps) {
           {current?.title ?? "Central de Tarefas & Jukebox"}
         </span>
       </div>
-      <span className="ml-auto hidden text-sm text-muted-foreground sm:inline">{userName}</span>
-      <form action={logout}>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button type="submit" variant="ghost" size="icon" aria-label="Sair" />
-            }
-          >
-            <LogOut className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent>Sair</TooltipContent>
-        </Tooltip>
-      </form>
+      <div className="ml-auto flex items-center gap-2">
+        <span className="hidden text-sm text-muted-foreground sm:inline">{userName}</span>
+        <PwaInstallButton />
+        <form action={logout}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button type="submit" variant="ghost" size="icon" aria-label="Sair">
+                <LogOut className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sair</TooltipContent>
+          </Tooltip>
+        </form>
+      </div>
     </header>
   );
 }

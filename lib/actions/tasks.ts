@@ -149,10 +149,7 @@ export interface CalendarTask {
   updatedAt: string;
 }
 
-export async function getTasksForMonth(year: number, month: number): Promise<CalendarTask[]> {
-  const start = new Date(Date.UTC(year, month, 1));
-  const end = new Date(Date.UTC(year, month + 1, 1));
-
+async function getTasksBetween(start: Date, end: Date): Promise<CalendarTask[]> {
   const tasks = await prisma.task.findMany({
     where: { dueDate: { gte: start, lt: end } },
     include: {
@@ -176,6 +173,14 @@ export async function getTasksForMonth(year: number, month: number): Promise<Cal
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   }));
+}
+
+export async function getTasksForMonth(year: number, month: number): Promise<CalendarTask[]> {
+  return getTasksBetween(new Date(Date.UTC(year, month, 1)), new Date(Date.UTC(year, month + 1, 1)));
+}
+
+export async function getTasksForYear(year: number): Promise<CalendarTask[]> {
+  return getTasksBetween(new Date(Date.UTC(year, 0, 1)), new Date(Date.UTC(year + 1, 0, 1)));
 }
 
 export async function updateTaskDueDate(taskId: string, dueDate: string) {
