@@ -7,7 +7,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Logo } from "@/components/logo";
 import { allNav } from "@/lib/nav";
 import { logout } from "@/lib/actions/auth";
 import { PwaInstallButton } from "@/components/pwa-install-button";
@@ -22,9 +21,8 @@ export function AppHeader({ userName }: AppHeaderProps) {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <SidebarTrigger className="hidden md:inline-flex" />
-      <Separator orientation="vertical" className="hidden h-5 md:block" />
-      <Logo className="size-6 md:hidden" />
+      <SidebarTrigger />
+      <Separator orientation="vertical" className="h-5" />
       <div className="flex items-center gap-1.5">
         {current && <current.icon className="size-4 text-muted-foreground" />}
         <span className="text-sm font-medium">
