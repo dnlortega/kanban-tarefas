@@ -80,22 +80,20 @@ export function LoginForm({ from }: LoginFormProps) {
             )}
 
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="submit"
-                    size="icon-lg"
-                    className="mt-1 self-center"
-                    aria-label="Entrar"
-                    disabled={isPending}
-                  />
-                }
-              >
-                {isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <LogIn className="size-4" />
-                )}
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="mt-1 size-11 self-center"
+                  aria-label="Entrar"
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <LogIn className="size-4" />
+                  )}
+                </Button>
               </TooltipTrigger>
               <TooltipContent>Entrar</TooltipContent>
             </Tooltip>

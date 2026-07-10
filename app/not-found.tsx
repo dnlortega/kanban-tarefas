@@ -18,17 +18,12 @@ export default function NotFound() {
         </p>
       </div>
       <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              size="icon"
-              aria-label="Voltar ao início"
-              nativeButton={false}
-              render={<Link href="/" />}
-            />
-          }
-        >
-          <Home className="size-4" />
+        <TooltipTrigger asChild>
+          <Button asChild size="icon" aria-label="Voltar ao início">
+            <Link href="/">
+              <Home className="size-4" />
+            </Link>
+          </Button>
         </TooltipTrigger>
         <TooltipContent>Voltar ao início</TooltipContent>
       </Tooltip>

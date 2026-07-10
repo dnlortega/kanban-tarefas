@@ -414,19 +414,12 @@ export function KanbanBoard({
             <EmailSummaryButton columns={columns} />
             {isCoordinator && (
               <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      aria-label="Administrar colunas"
-                      nativeButton={false}
-                      render={<Link href="/admin" />}
-                    />
-                  }
-                >
-                  <Settings className="size-4" />
+                <TooltipTrigger asChild>
+                  <Button asChild type="button" variant="outline" size="icon" aria-label="Administrar colunas">
+                    <Link href="/admin">
+                      <Settings className="size-4" />
+                    </Link>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Administrar colunas</TooltipContent>
               </Tooltip>
@@ -434,18 +427,16 @@ export function KanbanBoard({
             <ThemeToggle />
             {isCoordinator && (
               <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      type="button"
-                      size="icon"
-                      aria-label="Nova tarefa"
-                      onClick={() => openCreateDialog(columns[0]?.id ?? "")}
-                      disabled={columns.length === 0}
-                    />
-                  }
-                >
-                  <Plus className="size-4" />
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    aria-label="Nova tarefa"
+                    onClick={() => openCreateDialog(columns[0]?.id ?? "")}
+                    disabled={columns.length === 0}
+                  >
+                    <Plus className="size-4" />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Nova tarefa</TooltipContent>
               </Tooltip>
@@ -466,10 +457,6 @@ export function KanbanBoard({
             />
           </div>
           <Select
-            items={[
-              { value: ALL_ASSIGNEES, label: "Todos os responsáveis" },
-              ...assigneeOptions.map((name) => ({ value: name, label: name })),
-            ]}
             value={assigneeFilter ?? ALL_ASSIGNEES}
             onValueChange={(value) =>
               setAssigneeFilter(value === ALL_ASSIGNEES ? null : value)
@@ -488,10 +475,6 @@ export function KanbanBoard({
             </SelectContent>
           </Select>
           <Select
-            items={[
-              { value: ALL_DUE, label: "Todos os prazos" },
-              ...DUE_FILTER_OPTIONS,
-            ]}
             value={dueFilter ?? ALL_DUE}
             onValueChange={(value) =>
               setDueFilter(value === ALL_DUE ? null : (value as DueFilter))
@@ -511,22 +494,21 @@ export function KanbanBoard({
           </Select>
           {isFiltering && (
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Limpar filtros"
-                    onClick={() => {
-                      setSearch("");
-                      setAssigneeFilter(null);
-                      setDueFilter(null);
-                    }}
-                  />
-                }
-              >
-                <X className="size-4" />
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label="Limpar filtros"
+                  onClick={() => {
+                    setSearch("");
+                    setAssigneeFilter(null);
+                    setDueFilter(null);
+                  }}
+                >
+                  <X className="size-4" />
+                </Button>
               </TooltipTrigger>
               <TooltipContent>Limpar filtros</TooltipContent>
             </Tooltip>
@@ -566,16 +548,12 @@ export function KanbanBoard({
                   Nenhuma coluna configurada ainda.
                 </p>
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        aria-label="Criar primeira coluna"
-                        nativeButton={false}
-                        render={<Link href="/admin" />}
-                      />
-                    }
-                  >
-                    <Settings className="size-4" />
+                  <TooltipTrigger asChild>
+                    <Button asChild aria-label="Criar primeira coluna">
+                      <Link href="/admin">
+                        <Settings className="size-4" />
+                      </Link>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>Criar primeira coluna</TooltipContent>
                 </Tooltip>

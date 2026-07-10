@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getInitials, stringToColor } from "@/lib/utils";
+import { cn, getInitials, stringToColor } from "@/lib/utils";
 
 interface TaskAvatarProps {
   name: string;
@@ -8,7 +8,7 @@ interface TaskAvatarProps {
 
 export function TaskAvatar({ name, className }: TaskAvatarProps) {
   return (
-    <Avatar size="sm" className={className}>
+    <Avatar className={cn("size-6", className)}>
       <AvatarFallback
         style={{ backgroundColor: stringToColor(name), color: "white" }}
         className="text-[10px] font-semibold"

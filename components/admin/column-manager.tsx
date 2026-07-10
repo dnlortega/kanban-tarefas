@@ -102,20 +102,18 @@ export function ColumnManager({ initialColumns }: ColumnManagerProps) {
     <>
       <div className="flex justify-end">
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                size="icon"
-                aria-label="Nova coluna"
-                onClick={() => {
-                  setEditing(null);
-                  setDialogOpen(true);
-                }}
-              />
-            }
-          >
-            <Plus className="size-4" />
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="icon"
+              aria-label="Nova coluna"
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>Nova coluna</TooltipContent>
         </Tooltip>

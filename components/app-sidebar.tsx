@@ -40,12 +40,14 @@ function NavGroup({ label, items, pathname }: NavGroupProps) {
           {items.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
-                render={<Link href={item.href} />}
+                asChild
                 isActive={pathname === item.href}
                 tooltip={item.title}
               >
-                <item.icon />
-                <span>{item.title}</span>
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

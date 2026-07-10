@@ -257,47 +257,41 @@ export function JukeboxPlayer({
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        aria-label="Música anterior"
-                        onClick={handlePrevious}
-                      />
-                    }
-                  >
-                    <SkipBack className="size-4" />
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      aria-label="Música anterior"
+                      onClick={handlePrevious}
+                    >
+                      <SkipBack className="size-4" />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>Música anterior</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        aria-label={isPlaying ? "Pausar" : "Tocar"}
-                        onClick={handleTogglePlay}
-                      />
-                    }
-                  >
-                    {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      aria-label={isPlaying ? "Pausar" : "Tocar"}
+                      onClick={handleTogglePlay}
+                    >
+                      {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>{isPlaying ? "Pausar" : "Tocar"}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        aria-label="Próxima música"
-                        onClick={handleSkip}
-                      />
-                    }
-                  >
-                    <SkipForward className="size-4" />
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      aria-label="Próxima música"
+                      onClick={handleSkip}
+                    >
+                      <SkipForward className="size-4" />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>Próxima música</TooltipContent>
                 </Tooltip>
@@ -428,17 +422,15 @@ function QueueItem({ track, index, onRemove }: QueueItemProps) {
           )}
         </div>
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Remover da fila"
-                onClick={() => onRemove(track.id)}
-              />
-            }
-          >
-            <Trash2 className="size-3.5" />
+          <TooltipTrigger asChild>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Remover da fila"
+              onClick={() => onRemove(track.id)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>Remover da fila</TooltipContent>
         </Tooltip>

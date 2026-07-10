@@ -88,20 +88,18 @@ export function UserManager({ initialUsers, currentUserId }: UserManagerProps) {
     <>
       <div className="flex justify-end">
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                size="icon"
-                aria-label="Novo usuário"
-                onClick={() => {
-                  setEditing(null);
-                  setDialogOpen(true);
-                }}
-              />
-            }
-          >
-            <Plus className="size-4" />
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="icon"
+              aria-label="Novo usuário"
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>Novo usuário</TooltipContent>
         </Tooltip>

@@ -146,7 +146,7 @@ function UserForm({
 
         <div className="grid gap-1.5">
           <Label>Papel</Label>
-          <Select items={ROLE_ITEMS} value={role} onValueChange={(v) => setRole(v as Role)}>
+          <Select value={role} onValueChange={(v) => setRole(v as Role)}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -163,33 +163,29 @@ function UserForm({
 
       <DialogFooter>
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Cancelar"
-                onClick={onCancel}
-              />
-            }
-          >
-            <X className="size-4" />
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Cancelar"
+              onClick={onCancel}
+            >
+              <X className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>Cancelar</TooltipContent>
         </Tooltip>
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!canSubmit}
-                aria-label={isEditing ? "Salvar alterações" : "Criar usuário"}
-              />
-            }
-          >
-            <Check className="size-4" />
+          <TooltipTrigger asChild>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!canSubmit}
+              aria-label={isEditing ? "Salvar alterações" : "Criar usuário"}
+            >
+              <Check className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             {isEditing ? "Salvar alterações" : "Criar usuário"}

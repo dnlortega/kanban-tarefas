@@ -39,37 +39,33 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Cancelar"
-                  onClick={() => onOpenChange(false)}
-                />
-              }
-            >
-              <X className="size-4" />
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Cancelar"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="size-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent>Cancelar</TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  aria-label={confirmLabel}
-                  onClick={() => {
-                    onConfirm();
-                    onOpenChange(false);
-                  }}
-                />
-              }
-            >
-              <Check className="size-4" />
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                aria-label={confirmLabel}
+                onClick={() => {
+                  onConfirm();
+                  onOpenChange(false);
+                }}
+              >
+                <Check className="size-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent>{confirmLabel}</TooltipContent>
           </Tooltip>

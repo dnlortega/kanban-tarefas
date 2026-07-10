@@ -41,7 +41,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider delay={200}>
+          <TooltipProvider delayDuration={200}>
             {children}
             <PwaInstaller />
             <Toaster richColors position="bottom-right" />

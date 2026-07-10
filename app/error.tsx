@@ -30,12 +30,10 @@ export default function Error({
         </p>
       </div>
       <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button size="icon" aria-label="Tentar novamente" onClick={reset} />
-          }
-        >
-          <RotateCw className="size-4" />
+        <TooltipTrigger asChild>
+          <Button size="icon" aria-label="Tentar novamente" onClick={reset}>
+            <RotateCw className="size-4" />
+          </Button>
         </TooltipTrigger>
         <TooltipContent>Tentar novamente</TooltipContent>
       </Tooltip>

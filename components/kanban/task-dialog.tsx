@@ -151,26 +151,28 @@ function TaskForm({
         <div className="grid gap-1.5">
           <Label htmlFor="task-title">Título</Label>
           <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
-            <PopoverTrigger nativeButton={false} render={<div className="relative" />}>
-              <Input
-                id="task-title"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setTitlePopoverOpen(e.target.value.length > 0);
-                }}
-                onFocus={() => title.length > 0 && setTitlePopoverOpen(true)}
-                placeholder="Ex: Revisar proposta comercial"
-                autoComplete="off"
-                autoFocus
-                required
-              />
-              {titleSuggestions.length > 0 && (
-                <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/50" />
-              )}
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Input
+                  id="task-title"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setTitlePopoverOpen(e.target.value.length > 0);
+                  }}
+                  onFocus={() => title.length > 0 && setTitlePopoverOpen(true)}
+                  placeholder="Ex: Revisar proposta comercial"
+                  autoComplete="off"
+                  autoFocus
+                  required
+                />
+                {titleSuggestions.length > 0 && (
+                  <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/50" />
+                )}
+              </div>
             </PopoverTrigger>
             {filteredSuggestions.length > 0 && (
-              <PopoverContent className="w-(--anchor-width) p-0">
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
                   <CommandList>
                     <CommandEmpty>Nenhuma sugestão</CommandEmpty>
@@ -216,10 +218,6 @@ function TaskForm({
           <div className="grid gap-1.5">
             <Label htmlFor="task-assignee">Responsável (opcional)</Label>
             <Select
-              items={[
-                { value: UNASSIGNED, label: "Sem responsável" },
-                ...assignableUsers.map((u) => ({ value: u.id, label: u.name })),
-              ]}
               value={assigneeId}
               onValueChange={(value) => value && setAssigneeId(value)}
             >
@@ -239,18 +237,16 @@ function TaskForm({
           <div className="grid gap-1.5">
             <Label htmlFor="task-due-date">Prazo (opcional)</Label>
             <Popover open={dueDatePopoverOpen} onOpenChange={setDueDatePopoverOpen}>
-              <PopoverTrigger
-                render={
-                  <Button
-                    type="button"
-                    id="task-due-date"
-                    variant="outline"
-                    className="justify-start font-normal"
-                  />
-                }
-              >
-                <CalendarIcon className="size-3.5" />
-                {dueDate ? formatDate(dueDate) : "Selecionar"}
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  id="task-due-date"
+                  variant="outline"
+                  className="justify-start font-normal"
+                >
+                  <CalendarIcon className="size-3.5" />
+                  {dueDate ? formatDate(dueDate) : "Selecionar"}
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
@@ -270,7 +266,6 @@ function TaskForm({
           <div className="grid gap-1.5">
             <Label htmlFor="task-status">Status inicial</Label>
             <Select
-              items={columns.map((col) => ({ value: col.id, label: col.title }))}
               value={columnId}
               onValueChange={(value) => value && setColumnId(value)}
             >
@@ -297,33 +292,29 @@ function TaskForm({
 
       <DialogFooter>
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Cancelar"
-                onClick={onCancel}
-              />
-            }
-          >
-            <X className="size-4" />
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Cancelar"
+              onClick={onCancel}
+            >
+              <X className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>Cancelar</TooltipContent>
         </Tooltip>
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!canSubmit}
-                aria-label={isEditing ? "Salvar alterações" : "Criar tarefa"}
-              />
-            }
-          >
-            <Check className="size-4" />
+          <TooltipTrigger asChild>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!canSubmit}
+              aria-label={isEditing ? "Salvar alterações" : "Criar tarefa"}
+            >
+              <Check className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             {isEditing ? "Salvar alterações" : "Criar tarefa"}

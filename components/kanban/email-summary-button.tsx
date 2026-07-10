@@ -43,18 +43,16 @@ export function EmailSummaryButton({ columns }: EmailSummaryButtonProps) {
 
   return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Enviar concluídas por e-mail"
-            onClick={handleSend}
-          />
-        }
-      >
-        <Mail className="size-4" />
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Enviar concluídas por e-mail"
+          onClick={handleSend}
+        >
+          <Mail className="size-4" />
+        </Button>
       </TooltipTrigger>
       <TooltipContent>Enviar concluídas por e-mail</TooltipContent>
     </Tooltip>

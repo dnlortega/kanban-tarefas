@@ -222,10 +222,6 @@ export function CalendarView({
         <h2 className="text-lg font-semibold">{heading}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <Select
-            items={[
-              { value: ALL_ASSIGNEES, label: "Todos os responsáveis" },
-              ...assigneeOptions.map((u) => ({ value: u.id, label: u.name })),
-            ]}
             value={assigneeFilter ?? ALL_ASSIGNEES}
             onValueChange={(value) =>
               setAssigneeFilter(value === ALL_ASSIGNEES ? null : value)
@@ -252,50 +248,30 @@ export function CalendarView({
 
           <div className="flex items-center gap-1">
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    size="icon-sm"
-                    variant="outline"
-                    aria-label="Anterior"
-                    nativeButton={false}
-                    render={<Link href={prevHref} />}
-                  />
-                }
-              >
-                <ChevronLeft className="size-4" />
+              <TooltipTrigger asChild>
+                <Button asChild size="icon" variant="outline" className="size-8" aria-label="Anterior">
+                  <Link href={prevHref}>
+                    <ChevronLeft className="size-4" />
+                  </Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>Anterior</TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    aria-label="Hoje"
-                    nativeButton={false}
-                    render={<Link href={todayHref} />}
-                  />
-                }
-              >
-                Hoje
+              <TooltipTrigger asChild>
+                <Button asChild size="sm" variant="outline" aria-label="Hoje">
+                  <Link href={todayHref}>Hoje</Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>Ir para hoje</TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    size="icon-sm"
-                    variant="outline"
-                    aria-label="Próximo"
-                    nativeButton={false}
-                    render={<Link href={nextHref} />}
-                  />
-                }
-              >
-                <ChevronRight className="size-4" />
+              <TooltipTrigger asChild>
+                <Button asChild size="icon" variant="outline" className="size-8" aria-label="Próximo">
+                  <Link href={nextHref}>
+                    <ChevronRight className="size-4" />
+                  </Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>Próximo</TooltipContent>
             </Tooltip>
@@ -375,18 +351,12 @@ function ViewLink({
 
   return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            size="icon-sm"
-            variant={current === view ? "secondary" : "ghost"}
-            aria-label={`Visualizar por ${VIEW_LABEL[view]}`}
-            nativeButton={false}
-            render={<Link href={href} />}
-          />
-        }
-      >
-        <Icon className="size-4" />
+      <TooltipTrigger asChild>
+        <Button asChild size="icon" variant={current === view ? "secondary" : "ghost"} className="size-8" aria-label={`Visualizar por ${VIEW_LABEL[view]}`}>
+          <Link href={href}>
+            <Icon className="size-4" />
+          </Link>
+        </Button>
       </TooltipTrigger>
       <TooltipContent>{VIEW_LABEL[view]}</TooltipContent>
     </Tooltip>

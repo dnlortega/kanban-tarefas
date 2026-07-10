@@ -97,12 +97,10 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
             className="flex-1"
           />
           <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button type="submit" size="icon" aria-label="Buscar" disabled={isSearching} />
-              }
-            >
-              <Search className="size-4" />
+            <TooltipTrigger asChild>
+              <Button type="submit" size="icon" aria-label="Buscar" disabled={isSearching}>
+                <Search className="size-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent>Buscar</TooltipContent>
           </Tooltip>
@@ -146,18 +144,16 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
                   )}
                 </div>
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        aria-label="Pedir esta música"
-                        disabled={result.blocked || requestingId === result.videoId}
-                        onClick={() => handleRequest(result)}
-                      />
-                    }
-                  >
-                    <Plus className="size-4" />
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      aria-label="Pedir esta música"
+                      disabled={result.blocked || requestingId === result.videoId}
+                      onClick={() => handleRequest(result)}
+                    >
+                      <Plus className="size-4" />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>Pedir esta música</TooltipContent>
                 </Tooltip>
@@ -200,17 +196,15 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
               <span className="text-xs text-muted-foreground">{index + 1}</span>
               <span className="min-w-0 flex-1 truncate">{track.title}</span>
               <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label="Remover da fila"
-                      onClick={() => handleRemove(track.id)}
-                    />
-                  }
-                >
-                  <Trash2 className="size-3.5" />
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Remover da fila"
+                    onClick={() => handleRemove(track.id)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Remover da fila</TooltipContent>
               </Tooltip>

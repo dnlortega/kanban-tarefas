@@ -66,12 +66,10 @@ export function BlockedSongsManager({ initialBlocked }: BlockedSongsManagerProps
           className="flex-1"
         />
         <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button type="submit" size="icon" aria-label="Bloquear termo" />
-            }
-          >
-            <Plus className="size-4" />
+          <TooltipTrigger asChild>
+            <Button type="submit" size="icon" aria-label="Bloquear termo">
+              <Plus className="size-4" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>Bloquear termo</TooltipContent>
         </Tooltip>
@@ -84,17 +82,15 @@ export function BlockedSongsManager({ initialBlocked }: BlockedSongsManagerProps
               <Ban className="size-4 shrink-0 text-destructive" />
               <span className="flex-1 truncate text-sm font-medium">{item.term}</span>
               <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label="Remover bloqueio"
-                      onClick={() => handleRemove(item.id)}
-                    />
-                  }
-                >
-                  <Trash2 className="size-3.5" />
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Remover bloqueio"
+                    onClick={() => handleRemove(item.id)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Remover bloqueio</TooltipContent>
               </Tooltip>
