@@ -45,7 +45,7 @@ function ColumnImpl({
   const isFiltered = tasks.length !== totalCount;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border bg-card shadow-xs ring-1 ring-foreground/8 sm:w-80 sm:shrink-0">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/90 backdrop-blur-md shadow-sm ring-1 ring-foreground/5 sm:w-80 sm:shrink-0 transition-colors">
       <div
         className="h-1 shrink-0"
         style={{ backgroundColor: column.color }}
@@ -96,8 +96,8 @@ function ColumnImpl({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto bg-muted/40 p-2 transition-colors",
-          isOver && "bg-primary/10 ring-2 ring-primary/30 ring-inset"
+          "flex min-h-24 flex-1 flex-col gap-3 overflow-y-auto bg-gradient-to-b from-muted/30 to-muted/10 p-3 transition-colors",
+          isOver && "bg-primary/5 ring-2 ring-primary/20 ring-inset"
         )}
       >
         <SortableContext

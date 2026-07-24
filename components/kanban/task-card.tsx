@@ -57,7 +57,7 @@ function TaskCardImpl({
       ref={overlay ? undefined : setNodeRef}
       style={overlay ? undefined : style}
       className={cn(
-        "group animate-in fade-in slide-in-from-bottom-1 gap-0 py-0 duration-300 transition-shadow hover:shadow-md",
+        "group animate-in fade-in slide-in-from-bottom-1 gap-0 py-0 duration-300 transition-all hover:-translate-y-1 hover:shadow-lg hover:border-primary/20",
         isDragging && "opacity-40",
         overlay && "rotate-2 shadow-lg"
       )}

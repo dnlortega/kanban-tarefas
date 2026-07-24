@@ -6,6 +6,15 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+declare global {
+  interface Window {
+    deferredPrompt?: {
+      prompt: () => void;
+      userChoice: Promise<{ outcome: string }>;
+    } | null;
+  }
+}
+
 export function PwaInstallButton() {
   const [installable, setInstallable] = useState(false);
 
@@ -19,8 +28,8 @@ export function PwaInstallButton() {
     }
 
     // Se o evento already fired e foi salvo
-    if (typeof window !== "undefined" && (window as any).deferredPrompt) {
-      setInstallable(true);
+    if (typeof window !== "undefined" && window.deferredPrompt) {
+      setTimeout(() => setInstallable(true), 0);
     }
 
     const handleReady = () => {
@@ -34,7 +43,7 @@ export function PwaInstallButton() {
   }, []);
 
   const handleInstallClick = async () => {
-    const deferredPrompt = (window as any).deferredPrompt;
+    const deferredPrompt = window.deferredPrompt;
     if (!deferredPrompt) return;
 
     // Exibe o prompt de instalação
@@ -45,7 +54,7 @@ export function PwaInstallButton() {
     console.log(`Escolha de instalação do usuário: ${outcome}`);
 
     // Limpa o prompt para que não possa ser reutilizado
-    (window as any).deferredPrompt = null;
+    window.deferredPrompt = null;
     setInstallable(false);
   };
 
