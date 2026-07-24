@@ -18,7 +18,8 @@ export function PwaInstaller() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       // Salva o evento no objeto window para que o botão de PWA possa acessá-lo
-      (window as Window & typeof globalThis & { deferredPrompt?: Event }).deferredPrompt = e;
+      // @ts-expect-error - Event type mismatch with global Window interface
+      window.deferredPrompt = e;
       // Despacha um evento customizado indicando que o PWA está pronto para instalação
       window.dispatchEvent(new CustomEvent("pwa-install-ready"));
     };
