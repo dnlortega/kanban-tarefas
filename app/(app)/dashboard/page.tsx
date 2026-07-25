@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Clock, Music } from "lucide-react";
+import { CheckCircle2, Clock, Music, GitCommit } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +57,23 @@ export default async function DashboardPage() {
             <Link href="/jukebox" className="text-xs text-primary mt-4 inline-block hover:underline font-medium">
               Abrir Player &rarr;
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-8">
+        <Card className="border-border/50 bg-muted/30">
+          <CardHeader className="flex flex-row items-center space-x-2 pb-2">
+            <GitCommit className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-lg">Última Atualização do Sistema</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium">
+              {process.env.VERCEL_GIT_COMMIT_MESSAGE || "feat: V2 Upgrade - Dashboard, Perfil, Kanban routing and Jukebox history clear"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Commit SHA: {process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || "13fc307"}
+            </p>
           </CardContent>
         </Card>
       </div>
