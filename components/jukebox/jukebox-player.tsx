@@ -21,6 +21,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   GripVertical,
+  PlaySquare,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  Volume2,
+  VolumeX,
   History,
   Music,
   Pause,
@@ -32,6 +38,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
@@ -42,6 +49,8 @@ import {
   removeFromQueue,
   reorderQueue,
   skipTrack,
+  requeueTrack,
+  shuffleQueue,
 } from "@/lib/actions/jukebox";
 import type { Track } from "@/types/jukebox";
 
@@ -49,6 +58,11 @@ interface YTPlayerInstance {
   loadVideoById: (videoId: string) => void;
   playVideo: () => void;
   pauseVideo: () => void;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  getDuration: () => number;
+  getCurrentTime: () => number;
+  setVolume: (volume: number) => void;
+  getVolume: () => number;
 }
 
 interface YTPlayerOptions {
@@ -85,11 +99,19 @@ export function JukeboxPlayer({
   const [history, setHistory] = useState(initialHistory);
   const [isDragging, setIsDragging] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
+  
+  // New States
+  const [repeatMode, setRepeatMode] = useState<"off" | "one" | "all">("off");
+  const [volume, setVolume] = useState(100);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
   const playingIdRef = useRef<string | null>(initialPlaying?.id ?? null);
   const isDraggingRef = useRef(false);
+  const repeatModeRef = useRef(repeatMode);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -97,7 +119,16 @@ export function JukeboxPlayer({
   );
 
   const handleEnded = useCallback(async () => {
-    const next = await advanceQueue(playingIdRef.current ?? undefined);
+    if (repeatModeRef.current === "one") {
+      if (playerRef.current && typeof playerRef.current.seekTo === "function") {
+        playerRef.current.seekTo(0, true);
+        if (typeof playerRef.current.playVideo === "function") {
+          playerRef.current.playVideo();
+        }
+      }
+      return;
+    }
+    const next = await advanceQueue(playingIdRef.current ?? undefined, repeatModeRef.current === "all");
     setPlaying(next);
     const state = await getQueueState();
     setQueue(state.queued);
@@ -111,6 +142,10 @@ export function JukeboxPlayer({
   useEffect(() => {
     isDraggingRef.current = isDragging;
   }, [isDragging]);
+
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
 
   useEffect(() => {
     function createPlayer() {
@@ -171,6 +206,20 @@ export function JukeboxPlayer({
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (playerRef.current && isPlaying && !isSeeking) {
+        if (typeof playerRef.current.getCurrentTime === "function") {
+          setProgress(playerRef.current.getCurrentTime() || 0);
+        }
+        if (typeof playerRef.current.getDuration === "function") {
+          setDuration(playerRef.current.getDuration() || 0);
+        }
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isPlaying, isSeeking]);
+
   async function handleSkip() {
     if (!playing) return;
     const next = await skipTrack(playing.id);
@@ -192,9 +241,13 @@ export function JukeboxPlayer({
   function handleTogglePlay() {
     if (!playerRef.current) return;
     if (isPlaying) {
-      playerRef.current.pauseVideo();
+      if (typeof playerRef.current.pauseVideo === "function") {
+        playerRef.current.pauseVideo();
+      }
     } else {
-      playerRef.current.playVideo();
+      if (typeof playerRef.current.playVideo === "function") {
+        playerRef.current.playVideo();
+      }
     }
   }
 
@@ -216,6 +269,49 @@ export function JukeboxPlayer({
       reorderQueue(reordered.map((t) => t.id)).catch(() => {});
       return reordered;
     });
+  }
+
+  function handleVolumeChange(vals: number[]) {
+    const val = vals[0]!;
+    setVolume(val);
+    if (playerRef.current && typeof playerRef.current.setVolume === "function") {
+      playerRef.current.setVolume(val);
+    }
+  }
+
+  function handleSeekChange(vals: number[]) {
+    setIsSeeking(true);
+    setProgress(vals[0]!);
+  }
+
+  function handleSeekCommit(vals: number[]) {
+    setIsSeeking(false);
+    if (playerRef.current && typeof playerRef.current.seekTo === "function") {
+      playerRef.current.seekTo(vals[0]!, true);
+    }
+  }
+
+  function handleToggleRepeat() {
+    setRepeatMode((prev) => (prev === "off" ? "all" : prev === "all" ? "one" : "off"));
+  }
+
+  async function handleShuffle() {
+    await shuffleQueue();
+    const state = await getQueueState();
+    setQueue(state.queued);
+  }
+
+  async function handleRequeue(trackId: string) {
+    await requeueTrack(trackId);
+    const state = await getQueueState();
+    setQueue(state.queued);
+  }
+
+  function formatTime(seconds: number) {
+    if (!seconds) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
   return (
@@ -254,47 +350,91 @@ export function JukeboxPlayer({
                   {playing.channel}
                   {playing.requestedBy && ` • Pedido por ${playing.requestedBy}`}
                 </p>
+                
+                {/* Progress Bar */}
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="w-10 text-right text-xs text-muted-foreground">{formatTime(progress)}</span>
+                  <Slider
+                    value={[progress]}
+                    max={duration || 100}
+                    step={1}
+                    onValueChange={handleSeekChange}
+                    onValueCommit={handleSeekCommit}
+                    className="flex-1"
+                  />
+                  <span className="w-10 text-xs text-muted-foreground">{formatTime(duration)}</span>
+                </div>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      aria-label="Música anterior"
-                      onClick={handlePrevious}
-                    >
-                      <SkipBack className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Música anterior</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      aria-label={isPlaying ? "Pausar" : "Tocar"}
-                      onClick={handleTogglePlay}
-                    >
-                      {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isPlaying ? "Pausar" : "Tocar"}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      aria-label="Próxima música"
-                      onClick={handleSkip}
-                    >
-                      <SkipForward className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Próxima música</TooltipContent>
-                </Tooltip>
+              <div className="flex shrink-0 items-center gap-1 flex-col justify-center">
+                <div className="flex items-center gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Repetir"
+                        onClick={handleToggleRepeat}
+                        className={cn(repeatMode !== "off" && "text-primary")}
+                      >
+                        {repeatMode === "one" ? <Repeat1 className="size-4" /> : <Repeat className="size-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {repeatMode === "off" ? "Repetir desativado" : repeatMode === "one" ? "Repetir música" : "Repetir fila"}
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label="Música anterior"
+                        onClick={handlePrevious}
+                      >
+                        <SkipBack className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Música anterior</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label={isPlaying ? "Pausar" : "Tocar"}
+                        onClick={handleTogglePlay}
+                      >
+                        {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isPlaying ? "Pausar" : "Tocar"}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label="Próxima música"
+                        onClick={handleSkip}
+                      >
+                        <SkipForward className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Próxima música</TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="flex items-center gap-2 mt-2 w-full px-2">
+                  <Button size="icon-sm" variant="ghost" onClick={() => handleVolumeChange([volume === 0 ? 100 : 0])}>
+                    {volume === 0 ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
+                  </Button>
+                  <Slider
+                    value={[volume]}
+                    max={100}
+                    step={1}
+                    onValueChange={handleVolumeChange}
+                    className="w-24"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -311,9 +451,20 @@ export function JukeboxPlayer({
       </div>
 
       <div className="flex flex-col gap-2 lg:min-h-0">
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          Próximas ({queue.length})
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            Próximas ({queue.length})
+          </h2>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-8 px-2" onClick={handleShuffle} disabled={queue.length < 2}>
+                <Shuffle className="size-4 mr-1.5" />
+                Shuffle
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Embaralhar fila</TooltipContent>
+          </Tooltip>
+        </div>
         <DndContext
           id="jukebox-queue"
           sensors={sensors}
@@ -354,9 +505,17 @@ export function JukeboxPlayer({
               {history.map((track) => (
                 <div
                   key={track.id}
-                  className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground"
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
                 >
                   <span className="min-w-0 flex-1 truncate">{track.title}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon-sm" variant="ghost" onClick={() => handleRequeue(track.id)}>
+                        <PlaySquare className="size-3.5 text-primary" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Tocar Novamente</TooltipContent>
+                  </Tooltip>
                 </div>
               ))}
             </div>

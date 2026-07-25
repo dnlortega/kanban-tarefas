@@ -52,9 +52,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Radio,
-    title: "Tocando agora",
+    title: "Tocando agora (Jukebox Premium)",
     description:
-      "Player de música com fila justa por rodízio entre quem pediu, controles de reprodução e histórico.",
+      "Player de música completo com fila justa por rodízio, opções de repetição (uma ou todas), shuffle aleatório, controle de volume, barra de progresso, e requeue rápido direto do histórico.",
   },
   {
     icon: ListMusic,
@@ -74,8 +74,8 @@ const STACK_GROUPS: { label: string; items: string[] }[] = [
     items: ["Next.js 16 (App Router, Server Actions)", "React 19", "TypeScript"],
   },
   {
-    label: "Interface",
-    items: ["Tailwind CSS v4", "shadcn/ui (estilo base-nova, sobre Base UI)", "@dnd-kit (drag and drop)", "date-fns"],
+    label: "Interface e Design",
+    items: ["Tailwind CSS v4", "shadcn/ui (Estética Vercel Minimalista)", "@dnd-kit (drag and drop)", "date-fns", "Lucide Icons"],
   },
   {
     label: "Dados",

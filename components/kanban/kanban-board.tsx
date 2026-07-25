@@ -403,7 +403,7 @@ export function KanbanBoard({
       <div className="flex flex-col gap-4 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent pb-1 pr-1 leading-normal">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground pb-1 pr-1 leading-normal">
               Quadro Kanban
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -448,12 +448,12 @@ export function KanbanBoard({
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[180px] flex-1">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por título ou descrição"
-              className="pl-8"
+              className="pl-9 bg-background/50 backdrop-blur-sm border-border/50 rounded-xl shadow-sm transition-all focus-visible:bg-background/80"
             />
           </div>
           <Select

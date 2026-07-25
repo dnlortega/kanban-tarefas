@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, createSessionToken } from "@/lib/auth";
-import { verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { getClientIp } from "@/lib/request-ip";
 
 export interface LoginState {
@@ -73,4 +73,57 @@ export async function login(
 export async function logout() {
   (await cookies()).delete(AUTH_COOKIE_NAME);
   redirect("/login");
+}
+
+export async function register(
+  _prevState: LoginState | undefined,
+  formData: FormData
+): Promise<LoginState | undefined> {
+  const name = String(formData.get("name") ?? "").trim();
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "").trim();
+
+  if (!name || !username || !password) {
+    return { error: "Informe nome, usuário e senha." };
+  }
+
+  if (password.length < 6) {
+    return { error: "A senha deve ter pelo menos 6 caracteres." };
+  }
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing) {
+      return { error: "Este nome de usuário já está em uso." };
+    }
+
+    const passwordHash = await hashPassword(password);
+    
+    // Create new user (defaulting to member role)
+    const user = await prisma.user.create({
+      data: {
+        name,
+        username,
+        passwordHash,
+        role: "member",
+      },
+    });
+
+    // Auto-login after registration
+    const token = await createSessionToken({ userId: user.id });
+    (await cookies()).set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+  } catch (err) {
+    console.error("Erro no cadastro:", err);
+    return {
+      error: "Não foi possível cadastrar agora (erro no servidor). Tente novamente em instantes.",
+    };
+  }
+
+  redirect("/");
 }

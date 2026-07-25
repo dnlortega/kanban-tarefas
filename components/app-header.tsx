@@ -20,7 +20,7 @@ export function AppHeader({ userName }: AppHeaderProps) {
   const current = allNav.find((item) => item.href === pathname);
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="mx-4 mt-4 mb-2 flex h-14 shrink-0 items-center gap-2 rounded-2xl border border-border/50 bg-background/50 px-4 backdrop-blur-xl shadow-sm transition-all hover:bg-background/60">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-5" />
       <div className="flex items-center gap-1.5">

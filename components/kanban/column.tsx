@@ -45,7 +45,7 @@ function ColumnImpl({
   const isFiltered = tasks.length !== totalCount;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/90 backdrop-blur-md shadow-sm ring-1 ring-foreground/5 sm:w-80 sm:shrink-0 transition-colors">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-3xl border border-border/30 bg-card/40 backdrop-blur-2xl shadow-lg ring-1 ring-white/10 sm:w-80 sm:shrink-0 transition-colors">
       <div
         className="h-1 shrink-0"
         style={{ backgroundColor: column.color }}
@@ -96,7 +96,7 @@ function ColumnImpl({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-24 flex-1 flex-col gap-3 overflow-y-auto bg-gradient-to-b from-muted/30 to-muted/10 p-3 transition-colors",
+          "flex min-h-24 flex-1 flex-col gap-3 overflow-y-auto bg-gradient-to-b from-background/30 to-background/10 p-3 transition-colors",
           isOver && "bg-primary/5 ring-2 ring-primary/20 ring-inset"
         )}
       >

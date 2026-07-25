@@ -149,17 +149,36 @@ export async function ensurePlaybackStarted() {
     data: { status: "playing", playedAt: new Date() },
   });
 
-  revalidatePath("/jukebox");
-  revalidatePath("/jukebox/pedir");
   return serialize(updated);
 }
 
-export async function advanceQueue(finishedTrackId?: string) {
+export async function advanceQueue(finishedTrackId?: string, repeatAll: boolean = false) {
   if (finishedTrackId) {
+    const finishedTrack = await prisma.track.findUnique({ where: { id: finishedTrackId } });
+    
     await prisma.track.updateMany({
       where: { id: finishedTrackId, status: "playing" },
       data: { status: "done" },
     });
+
+    if (repeatAll && finishedTrack) {
+      const last = await prisma.track.findFirst({
+        where: { status: "queued" },
+        orderBy: { order: "desc" },
+      });
+      await prisma.track.create({
+        data: {
+          youtubeId: finishedTrack.youtubeId,
+          title: finishedTrack.title,
+          channel: finishedTrack.channel,
+          thumbnail: finishedTrack.thumbnail,
+          genre: finishedTrack.genre,
+          requestedBy: finishedTrack.requestedBy,
+          status: "queued",
+          order: last ? last.order + 1 : 0,
+        },
+      });
+    }
   }
 
   const next = await pickNextQueuedTrack();
@@ -237,4 +256,58 @@ export async function getRecentlyPlayed(limit = 10) {
     take: limit,
   });
   return tracks.map(serialize);
+}
+
+export async function requeueTrack(trackId: string) {
+  const trackToRequeue = await prisma.track.findUnique({ where: { id: trackId } });
+  if (!trackToRequeue) return;
+
+  const last = await prisma.track.findFirst({
+    where: { status: "queued" },
+    orderBy: { order: "desc" },
+  });
+
+  await prisma.track.create({
+    data: {
+      youtubeId: trackToRequeue.youtubeId,
+      title: trackToRequeue.title,
+      channel: trackToRequeue.channel,
+      thumbnail: trackToRequeue.thumbnail,
+      genre: trackToRequeue.genre,
+      requestedBy: trackToRequeue.requestedBy,
+      status: "queued",
+      order: last ? last.order + 1 : 0,
+    },
+  });
+
+  revalidatePath("/jukebox");
+  revalidatePath("/jukebox/pedir");
+}
+
+export async function shuffleQueue() {
+  const queued = await prisma.track.findMany({
+    where: { status: "queued" },
+    orderBy: { order: "asc" },
+  });
+
+  if (queued.length <= 1) return;
+
+  // Fisher-Yates shuffle
+  const shuffled = [...queued];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+  }
+
+  await prisma.$transaction(
+    shuffled.map((track, index) =>
+      prisma.track.update({
+        where: { id: track.id },
+        data: { order: index },
+      })
+    )
+  );
+
+  revalidatePath("/jukebox");
+  revalidatePath("/jukebox/pedir");
 }

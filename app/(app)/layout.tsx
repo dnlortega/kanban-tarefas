@@ -21,7 +21,7 @@ export default async function AppShellLayout({
   return (
     <SidebarProvider>
       <AppSidebar isCoordinator={isCoordinator} />
-      <SidebarInset>
+      <SidebarInset className="bg-transparent">
         <AppHeader userName={currentUser.name} />
         <div className="flex min-h-0 flex-1 flex-col pb-14 md:pb-0">{children}</div>
       </SidebarInset>

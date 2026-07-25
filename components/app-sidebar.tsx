@@ -66,7 +66,7 @@ export function AppSidebar({ isCoordinator }: AppSidebarProps) {
   const visibleBoardNav = boardNav.filter((item) => !item.coordinatorOnly || isCoordinator);
 
   return (
-    <Sidebar collapsible="icon" className="hidden md:flex">
+    <Sidebar variant="floating" collapsible="icon" className="hidden md:flex bg-sidebar/50 backdrop-blur-3xl shadow-xl shadow-black/5 border-sidebar-border/50">
       <SidebarHeader className="px-3 py-4">
         <div className="flex items-center gap-2 px-1">
           <Logo className="size-7 shrink-0" />

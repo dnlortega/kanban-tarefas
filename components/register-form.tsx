@@ -1,27 +1,20 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { AlertCircle, Loader2, LogIn, Lock, User, ArrowRight } from "lucide-react";
+import { AlertCircle, Loader2, UserPlus, Lock, User, ArrowRight, UserCircle2 } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
-import { login } from "@/lib/actions/auth";
+import { register } from "@/lib/actions/auth";
 
-interface LoginFormProps {
-  from?: string;
-}
-
-export function LoginForm({ from }: LoginFormProps) {
-  const [state, formAction, isPending] = useActionState(login, undefined);
+export function RegisterForm() {
+  const [state, formAction, isPending] = useActionState(register, undefined);
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  const handleFill = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 sm:p-8">
@@ -29,21 +22,38 @@ export function LoginForm({ from }: LoginFormProps) {
       <div className="w-full max-w-sm rounded-xl border bg-card p-8 shadow-sm">
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10">
-            <Logo className="size-6 text-primary" />
+            <UserPlus className="size-6 text-primary" />
           </div>
           
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Central de Tarefas
+            Criar Conta
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Acesse sua conta para continuar
+            Preencha os dados abaixo
           </p>
         </div>
 
         <form action={formAction} className="mt-10 flex flex-col gap-6">
-          <input type="hidden" name="from" value={from ?? "/"} />
-
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo</Label>
+              <div className="relative">
+                <UserCircle2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoFocus
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                  placeholder="Seu nome"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="username">Usuário</Label>
               <div className="relative">
@@ -52,7 +62,6 @@ export function LoginForm({ from }: LoginFormProps) {
                   id="username"
                   name="username"
                   type="text"
-                  autoFocus
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -74,7 +83,7 @@ export function LoginForm({ from }: LoginFormProps) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   placeholder="Sua senha secreta"
                   className="pl-9"
                 />
@@ -93,41 +102,17 @@ export function LoginForm({ from }: LoginFormProps) {
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              "Entrar"
+              "Cadastrar"
             )}
           </Button>
-        </form>
-
-        <div className="mt-6 rounded-md bg-muted/50 p-4 text-sm">
-          <p className="mb-2 text-center font-medium text-muted-foreground">
-            Contas de Teste
+          
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Já tem uma conta?{' '}
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+              Fazer login
+            </Link>
           </p>
-          <div className="flex flex-col gap-2">
-            <button 
-              type="button" 
-              onClick={() => handleFill('coordenador', 'coord12345')}
-              className="flex items-center justify-between rounded bg-background p-2 text-xs border shadow-sm transition-colors hover:bg-muted"
-            >
-              <span className="font-medium">Coordenador</span>
-              <span className="text-muted-foreground">coord12345</span>
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleFill('membro', 'membro12345')}
-              className="flex items-center justify-between rounded bg-background p-2 text-xs border shadow-sm transition-colors hover:bg-muted"
-            >
-              <span className="font-medium">Membro</span>
-              <span className="text-muted-foreground">membro12345</span>
-            </button>
-          </div>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Ainda não tem conta?{' '}
-          <a href="/register" className="font-semibold text-primary hover:underline">
-            Criar conta
-          </a>
-        </p>
+        </form>
       </div>
     </div>
   );
