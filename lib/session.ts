@@ -9,7 +9,12 @@ export const getCurrentUser = cache(async () => {
   const session = await verifySessionToken(cookie);
   if (!session) return null;
 
-  return prisma.user.findUnique({ where: { id: session.userId } });
+  try {
+    return await prisma.user.findUnique({ where: { id: session.userId } });
+  } catch (error) {
+    console.error("Database connection failed during session check:", error);
+    return null;
+  }
 });
 
 export async function requireCoordinator() {
