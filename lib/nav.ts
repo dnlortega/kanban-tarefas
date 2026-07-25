@@ -3,11 +3,13 @@ import {
   Calendar,
   Info,
   KanbanSquare,
+  LayoutDashboard,
   ListMusic,
   Radio,
   Send,
   Settings,
   Users,
+  UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -21,7 +23,9 @@ export interface NavItem {
 }
 
 export const boardNav: NavItem[] = [
-  { title: "Quadro Kanban", href: "/", icon: KanbanSquare, primary: true },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, primary: true },
+  { title: "Meu Perfil", href: "/perfil", icon: UserCircle },
+  { title: "Quadro Kanban", href: "/kanban", icon: KanbanSquare, primary: true },
   { title: "Calendário", href: "/calendario", icon: Calendar, primary: true },
   { title: "Atribuir tarefas", href: "/atribuir", icon: Send, coordinatorOnly: true },
   { title: "Administração", href: "/admin", icon: Settings, coordinatorOnly: true },

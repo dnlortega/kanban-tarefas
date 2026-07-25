@@ -123,13 +123,11 @@ export async function requestTrack(input: RequestTrackInput) {
 }
 
 export async function getQueueState() {
-  const [playing, queued] = await Promise.all([
-    prisma.track.findFirst({ where: { status: "playing" } }),
-    prisma.track.findMany({
-      where: { status: "queued" },
-      orderBy: { order: "asc" },
-    }),
-  ]);
+  const playing = await prisma.track.findFirst({ where: { status: "playing" } });
+  const queued = await prisma.track.findMany({
+    where: { status: "queued" },
+    orderBy: { order: "asc" },
+  });
 
   return {
     playing: playing ? serialize(playing) : null,
@@ -200,6 +198,13 @@ export async function advanceQueue(finishedTrackId?: string, repeatAll: boolean 
 
 export async function skipTrack(trackId: string) {
   return advanceQueue(trackId);
+}
+
+export async function clearHistory() {
+  await prisma.track.deleteMany({
+    where: { status: "done" },
+  });
+  revalidatePath("/jukebox");
 }
 
 export async function playPrevious(currentTrackId?: string) {

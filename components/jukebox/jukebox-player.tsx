@@ -51,6 +51,7 @@ import {
   skipTrack,
   requeueTrack,
   shuffleQueue,
+  clearHistory,
 } from "@/lib/actions/jukebox";
 import type { Track } from "@/types/jukebox";
 
@@ -117,6 +118,13 @@ export function JukeboxPlayer({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const refresh = useCallback(async () => {
+    const state = await getQueueState();
+    setQueue(state.queued);
+    setPlaying(state.playing);
+    setHistory(await getRecentlyPlayed());
+  }, []);
 
   const handleEnded = useCallback(async () => {
     if (repeatModeRef.current === "one") {
@@ -270,6 +278,15 @@ export function JukeboxPlayer({
       return reordered;
     });
   }
+
+  const handleClearHistory = async () => {
+    setHistory([]);
+    try {
+      await clearHistory();
+    } catch {
+      await refresh();
+    }
+  };
 
   function handleVolumeChange(vals: number[]) {
     const val = vals[0]!;
@@ -457,9 +474,8 @@ export function JukeboxPlayer({
           </h2>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-8 px-2" onClick={handleShuffle} disabled={queue.length < 2}>
-                <Shuffle className="size-4 mr-1.5" />
-                Shuffle
+              <Button size="sm" variant="ghost" className="size-8 p-0" onClick={handleShuffle} disabled={queue.length < 2}>
+                <Shuffle className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Embaralhar fila</TooltipContent>
@@ -497,10 +513,20 @@ export function JukeboxPlayer({
 
         {history.length > 0 && (
           <>
-            <h2 className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-              <History className="size-3.5" />
-              Tocadas recentemente
-            </h2>
+            <div className="mt-2 flex items-center justify-between">
+              <h2 className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+                <History className="size-3.5" />
+                Tocadas recentemente
+              </h2>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleClearHistory}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Limpar histórico</TooltipContent>
+              </Tooltip>
+            </div>
             <div className="flex flex-col gap-1.5">
               {history.map((track) => (
                 <div
