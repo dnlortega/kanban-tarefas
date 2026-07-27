@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url");
   const type = searchParams.get("type") || "mp3";
+  const quality = searchParams.get("quality");
 
   if (!url || !ytdl.validateURL(url)) {
     return NextResponse.json({ error: "URL inválida do YouTube" }, { status: 400 });
@@ -15,14 +16,24 @@ export async function GET(request: NextRequest) {
     const info = await ytdl.getInfo(url);
     const title = info.videoDetails.title.replace(/[^\w\s-]/gi, "");
 
-    const formatOptions = type === "mp3"
-      ? { quality: "highestaudio", filter: "audioonly" }
-      : { quality: "highestvideo", filter: "audioandvideo" };
+    let formatOptions: any = {};
+    if (type === "mp3") {
+      formatOptions = { 
+        quality: quality === "low" ? "lowestaudio" : "highestaudio", 
+        filter: "audioonly" 
+      };
+    } else {
+      // Para vídeos com áudio sem usar FFMPEG (suportado pela Vercel), os itags comuns são 22 (720p) e 18 (360p)
+      formatOptions = { 
+        quality: quality === "360p" ? "18" : (quality === "720p" ? "22" : "highestvideo"), 
+        filter: "audioandvideo" 
+      };
+    }
 
-    const format = ytdl.chooseFormat(info.formats, formatOptions as any);
+    const format = ytdl.chooseFormat(info.formats, formatOptions);
     
     if (!format) {
-      return NextResponse.json({ error: "Formato não disponível" }, { status: 400 });
+      return NextResponse.json({ error: "Formato ou qualidade não disponível para este vídeo" }, { status: 400 });
     }
 
     const stream = ytdl(url, { format });

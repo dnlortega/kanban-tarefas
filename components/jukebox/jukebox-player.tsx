@@ -35,13 +35,20 @@ import {
   SkipForward,
   Trash2,
   Download,
-  Film,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   advanceQueue,
@@ -403,46 +410,43 @@ export function JukeboxPlayer({
                     </TooltipContent>
                   </Tooltip>
                   <div className="flex items-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          aria-label="Baixar MP3"
-                          asChild
-                        >
-                          <a
-                            href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp3`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download
-                          >
-                            <Download className="size-4" />
+                    <DropdownMenu>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" aria-label="Baixar">
+                              <Download className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>Baixar Música/Vídeo</TooltipContent>
+                      </Tooltip>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel>Áudio (MP3)</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp3&quality=high`} target="_blank" rel="noopener noreferrer" download>
+                            Alta Qualidade (Melhor Áudio)
                           </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Baixar MP3</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          aria-label="Baixar Vídeo (MP4)"
-                          asChild
-                        >
-                          <a
-                            href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp4`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download
-                          >
-                            <Film className="size-4" />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp3&quality=low`} target="_blank" rel="noopener noreferrer" download>
+                            Baixa Qualidade (Mais rápido)
                           </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Baixar Vídeo (MP4)</TooltipContent>
-                    </Tooltip>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Vídeo (MP4)</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp4&quality=720p`} target="_blank" rel="noopener noreferrer" download>
+                            HD (720p)
+                          </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp4&quality=360p`} target="_blank" rel="noopener noreferrer" download>
+                            SD (360p)
+                          </a>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -651,26 +655,43 @@ function QueueItem({ track, index, onRemove }: QueueItemProps) {
           )}
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Baixar MP3"
-                asChild
-              >
-                <a
-                  href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                >
-                  <Download className="size-3.5" />
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon-sm" variant="ghost" aria-label="Baixar">
+                    <Download className="size-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Baixar Música/Vídeo</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Áudio (MP3)</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3&quality=high`} target="_blank" rel="noopener noreferrer" download>
+                  Alta Qualidade
                 </a>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Baixar MP3</TooltipContent>
-          </Tooltip>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3&quality=low`} target="_blank" rel="noopener noreferrer" download>
+                  Baixa Qualidade
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Vídeo (MP4)</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp4&quality=720p`} target="_blank" rel="noopener noreferrer" download>
+                  HD (720p)
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp4&quality=360p`} target="_blank" rel="noopener noreferrer" download>
+                  SD (360p)
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
