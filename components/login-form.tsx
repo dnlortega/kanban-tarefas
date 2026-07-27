@@ -98,6 +98,30 @@ export function LoginForm({ from }: LoginFormProps) {
           </Button>
         </form>
 
+        <div className="mt-6 space-y-2 rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Credenciais de teste:</p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => handleFill("coordenador", "coord12345")}
+            >
+              Coordenador
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => handleFill("membro", "membro12345")}
+            >
+              Membro
+            </Button>
+          </div>
+        </div>
+
 
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
