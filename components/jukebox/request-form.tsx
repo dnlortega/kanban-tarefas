@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import confetti from "canvas-confetti";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Download, Film, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -152,20 +152,62 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
                     </p>
                   )}
                 </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      aria-label="Pedir esta música"
-                      disabled={result.blocked || requestingId === result.videoId}
-                      onClick={() => handleRequest(result)}
-                    >
-                      <Plus className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Pedir esta música</TooltipContent>
-                </Tooltip>
+                  <div className="flex items-center">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Baixar MP3"
+                          asChild
+                        >
+                          <a
+                            href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${result.videoId}`)}&type=mp3`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <Download className="size-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Baixar MP3</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Baixar Vídeo"
+                          asChild
+                        >
+                          <a
+                            href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${result.videoId}`)}&type=mp4`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <Film className="size-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Baixar Vídeo</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label="Pedir esta música"
+                        disabled={result.blocked || requestingId === result.videoId}
+                        onClick={() => handleRequest(result)}
+                      >
+                        <Plus className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Pedir esta música</TooltipContent>
+                  </Tooltip>
               </CardContent>
             </Card>
           ))}
@@ -204,19 +246,61 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
             >
               <span className="text-xs text-muted-foreground">{index + 1}</span>
               <span className="min-w-0 flex-1 truncate">{track.title}</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="Remover da fila"
-                    onClick={() => handleRemove(track.id)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Remover da fila</TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Baixar MP3"
+                      asChild
+                    >
+                      <a
+                        href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                      >
+                        <Download className="size-3.5" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Baixar MP3</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Baixar Vídeo"
+                      asChild
+                    >
+                      <a
+                        href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp4`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                      >
+                        <Film className="size-3.5" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Baixar Vídeo</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Remover da fila"
+                      onClick={() => handleRemove(track.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remover da fila</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           ))}
           {queue.length === 0 && (

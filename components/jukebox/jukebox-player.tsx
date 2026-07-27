@@ -34,6 +34,8 @@ import {
   SkipBack,
   SkipForward,
   Trash2,
+  Download,
+  Film,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -400,6 +402,48 @@ export function JukeboxPlayer({
                       {repeatMode === "off" ? "Repetir desativado" : repeatMode === "one" ? "Repetir música" : "Repetir fila"}
                     </TooltipContent>
                   </Tooltip>
+                  <div className="flex items-center">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Baixar MP3"
+                          asChild
+                        >
+                          <a
+                            href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp3`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <Download className="size-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Baixar MP3</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Baixar Vídeo (MP4)"
+                          asChild
+                        >
+                          <a
+                            href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp4`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <Film className="size-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Baixar Vídeo (MP4)</TooltipContent>
+                    </Tooltip>
+                  </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -606,19 +650,41 @@ function QueueItem({ track, index, onRemove }: QueueItemProps) {
             </p>
           )}
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              aria-label="Remover da fila"
-              onClick={() => onRemove(track.id)}
-            >
-              <Trash2 className="size-3.5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Remover da fila</TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Baixar MP3"
+                asChild
+              >
+                <a
+                  href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                >
+                  <Download className="size-3.5" />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Baixar MP3</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Remover da fila"
+                onClick={() => onRemove(track.id)}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remover da fila</TooltipContent>
+          </Tooltip>
+        </div>
       </CardContent>
     </Card>
   );
