@@ -98,29 +98,7 @@ export function LoginForm({ from }: LoginFormProps) {
           </Button>
         </form>
 
-        <div className="mt-6 rounded-md bg-muted/50 p-4 text-sm">
-          <p className="mb-2 text-center font-medium text-muted-foreground">
-            Contas de Teste
-          </p>
-          <div className="flex flex-col gap-2">
-            <button 
-              type="button" 
-              onClick={() => handleFill('coordenador', 'coord12345')}
-              className="flex items-center justify-between rounded bg-background p-2 text-xs border shadow-sm transition-colors hover:bg-muted"
-            >
-              <span className="font-medium">Coordenador</span>
-              <span className="text-muted-foreground">coord12345</span>
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleFill('membro', 'membro12345')}
-              className="flex items-center justify-between rounded bg-background p-2 text-xs border shadow-sm transition-colors hover:bg-muted"
-            >
-              <span className="font-medium">Membro</span>
-              <span className="text-muted-foreground">membro12345</span>
-            </button>
-          </div>
-        </div>
+
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Ainda não tem conta?{' '}
