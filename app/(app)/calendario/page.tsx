@@ -4,6 +4,7 @@ import {
   getTasksForYear,
   getTitleSuggestions,
 } from "@/lib/actions/tasks";
+import { getLabels } from "@/lib/actions/labels";
 import { prisma } from "@/lib/prisma";
 import { CalendarView, type CalendarViewMode } from "@/components/calendar/calendar-view";
 
@@ -22,7 +23,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const month = params.m ? Number(params.m) - 1 : now.getMonth();
   const day = params.d ? Number(params.d) : now.getDate();
 
-  const [currentUser, tasks, columns, users, titleSuggestions] = await Promise.all([
+  const [currentUser, tasks, columns, users, titleSuggestions, labels] = await Promise.all([
     getCurrentUser(),
     view === "year" ? getTasksForYear(year) : getTasksForMonth(year, month),
     prisma.column.findMany({
@@ -34,6 +35,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       orderBy: { name: "asc" },
     }),
     getTitleSuggestions(),
+    getLabels(),
   ]);
 
   const isCoordinator = currentUser?.role === "coordinator";
@@ -50,6 +52,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         columns={columns}
         assignableUsers={users}
         titleSuggestions={titleSuggestions}
+        availableLabels={labels}
       />
     </main>
   );

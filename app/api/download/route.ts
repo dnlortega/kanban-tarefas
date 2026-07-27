@@ -46,6 +46,9 @@ export async function GET(request: NextRequest) {
       headers.set("Content-Disposition", `attachment; filename="${title}.mp4"`);
       headers.set("Content-Type", "video/mp4");
     }
+    if (format.contentLength) {
+      headers.set("Content-Length", format.contentLength);
+    }
 
     // Convert node stream to web stream
     const readable = new ReadableStream({

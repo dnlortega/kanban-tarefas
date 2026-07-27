@@ -34,7 +34,7 @@ import { TaskAvatar } from "@/components/kanban/task-avatar";
 import { TaskDialog } from "@/components/kanban/task-dialog";
 import { cn } from "@/lib/utils";
 import { updateTask, updateTaskDueDate, type CalendarTask } from "@/lib/actions/tasks";
-import type { Column as ColumnType, TaskAssignee, TaskInput } from "@/types/task";
+import type { Column as ColumnType, TaskAssignee, TaskInput, Label } from "@/types/task";
 
 export type CalendarViewMode = "day" | "month" | "year";
 
@@ -89,6 +89,7 @@ interface CalendarViewProps {
   columns: ColumnType[];
   assignableUsers: TaskAssignee[];
   titleSuggestions: string[];
+  availableLabels: Label[];
 }
 
 export function CalendarView({
@@ -101,6 +102,7 @@ export function CalendarView({
   columns,
   assignableUsers,
   titleSuggestions,
+  availableLabels,
 }: CalendarViewProps) {
   const [taskList, setTaskList] = useState(tasks);
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
@@ -310,6 +312,7 @@ export function CalendarView({
           columns={columns}
           assignableUsers={assignableUsers}
           titleSuggestions={titleSuggestions}
+          availableLabels={availableLabels}
           onSubmit={handleSubmitEdit}
         />
       )}

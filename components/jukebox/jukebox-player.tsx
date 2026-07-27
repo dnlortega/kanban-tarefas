@@ -62,6 +62,7 @@ import {
   shuffleQueue,
   clearHistory,
 } from "@/lib/actions/jukebox";
+import { useDownloader } from "@/components/jukebox/use-downloader";
 import type { Track } from "@/types/jukebox";
 
 interface YTPlayerInstance {
@@ -116,6 +117,8 @@ export function JukeboxPlayer({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+
+  const { startDownload, DownloadDialog } = useDownloader();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
@@ -423,27 +426,31 @@ export function JukeboxPlayer({
                       </Tooltip>
                       <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuLabel>Áudio (MP3)</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp3&quality=high`} target="_blank" rel="noopener noreferrer" download>
-                            Alta Qualidade (Melhor Áudio)
-                          </a>
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.preventDefault();
+                          startDownload(`https://youtube.com/watch?v=${playing.youtubeId}`, "mp3", "high", playing.title);
+                        }}>
+                          Alta Qualidade (Melhor Áudio)
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp3&quality=low`} target="_blank" rel="noopener noreferrer" download>
-                            Baixa Qualidade (Mais rápido)
-                          </a>
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.preventDefault();
+                          startDownload(`https://youtube.com/watch?v=${playing.youtubeId}`, "mp3", "low", playing.title);
+                        }}>
+                          Baixa Qualidade (Mais rápido)
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Vídeo (MP4)</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp4&quality=720p`} target="_blank" rel="noopener noreferrer" download>
-                            HD (720p)
-                          </a>
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.preventDefault();
+                          startDownload(`https://youtube.com/watch?v=${playing.youtubeId}`, "mp4", "720p", playing.title);
+                        }}>
+                          HD (720p)
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${playing.youtubeId}`)}&type=mp4&quality=360p`} target="_blank" rel="noopener noreferrer" download>
-                            SD (360p)
-                          </a>
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.preventDefault();
+                          startDownload(`https://youtube.com/watch?v=${playing.youtubeId}`, "mp4", "360p", playing.title);
+                        }}>
+                          SD (360p)
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -548,6 +555,7 @@ export function JukeboxPlayer({
                   track={track}
                   index={index}
                   onRemove={handleRemove}
+                  onDownload={(type, quality) => startDownload(`https://youtube.com/watch?v=${track.youtubeId}`, type, quality, track.title)}
                 />
               ))}
               {queue.length === 0 && (
@@ -596,6 +604,7 @@ export function JukeboxPlayer({
           </>
         )}
       </div>
+      <DownloadDialog />
     </div>
   );
 }
@@ -604,9 +613,10 @@ interface QueueItemProps {
   track: Track;
   index: number;
   onRemove: (id: string) => void;
+  onDownload: (type: "mp3" | "mp4", quality: string) => void;
 }
 
-function QueueItem({ track, index, onRemove }: QueueItemProps) {
+function QueueItem({ track, index, onRemove, onDownload }: QueueItemProps) {
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } =
     useSortable({ id: track.id });
 
@@ -668,27 +678,19 @@ function QueueItem({ track, index, onRemove }: QueueItemProps) {
             </Tooltip>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>Áudio (MP3)</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3&quality=high`} target="_blank" rel="noopener noreferrer" download>
-                  Alta Qualidade
-                </a>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onDownload("mp3", "high"); }}>
+                Alta Qualidade
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp3&quality=low`} target="_blank" rel="noopener noreferrer" download>
-                  Baixa Qualidade
-                </a>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onDownload("mp3", "low"); }}>
+                Baixa Qualidade
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Vídeo (MP4)</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp4&quality=720p`} target="_blank" rel="noopener noreferrer" download>
-                  HD (720p)
-                </a>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onDownload("mp4", "720p"); }}>
+                HD (720p)
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a href={`/api/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${track.youtubeId}`)}&type=mp4&quality=360p`} target="_blank" rel="noopener noreferrer" download>
-                  SD (360p)
-                </a>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onDownload("mp4", "360p"); }}>
+                SD (360p)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
