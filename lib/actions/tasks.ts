@@ -155,6 +155,7 @@ export interface CalendarTask {
   columnColor: string;
   isDoneColumn: boolean;
   assignee: { id: string; name: string } | null;
+  labels: { id: string; name: string; color: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -165,6 +166,7 @@ async function getTasksBetween(start: Date, end: Date): Promise<CalendarTask[]> 
     include: {
       assignee: { select: { id: true, name: true } },
       column: { select: { title: true, color: true, isDone: true } },
+      labels: true,
     },
     orderBy: { dueDate: "asc" },
   });
@@ -180,6 +182,7 @@ async function getTasksBetween(start: Date, end: Date): Promise<CalendarTask[]> 
     columnColor: task.column.color,
     isDoneColumn: task.column.isDone,
     assignee: task.assignee,
+    labels: task.labels,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   }));
