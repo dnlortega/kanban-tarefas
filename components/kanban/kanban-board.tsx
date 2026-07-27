@@ -340,6 +340,7 @@ export function KanbanBoard({
               assignee: resolveAssignee(input.assigneeId),
               dueDate: input.dueDate ?? null,
               columnId: input.columnId,
+              labels: input.labelIds ? availableLabels.filter((l) => input.labelIds!.includes(l.id)) : [],
             };
             return c.id === editingTask.columnId
               ? { ...c, tasks: c.tasks.map((t) => (t.id === id ? updated : t)) }
@@ -371,6 +372,7 @@ export function KanbanBoard({
         assignee: resolveAssignee(input.assigneeId),
         dueDate: input.dueDate ?? null,
         columnId: input.columnId,
+        labels: input.labelIds ? availableLabels.filter((l) => input.labelIds!.includes(l.id)) : [],
         order: 9999,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
