@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar as CalendarIcon, Check, ChevronsUpDown, X } from "lucide-react";
+import { Calendar as CalendarIcon, Check, ChevronsUpDown, X, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
