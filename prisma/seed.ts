@@ -5,80 +5,85 @@ import { hashPassword } from "../lib/password";
 const prisma = new PrismaClient();
 
 async function main() {
-  const existingUsers = await prisma.user.count();
-  if (existingUsers === 0) {
-    const coordinator = await prisma.user.create({
+  // Limpar dados existentes
+  await prisma.task.deleteMany();
+  await prisma.column.deleteMany();
+  await prisma.user.deleteMany();
+
+  const coordHash = await hashPassword("coord12345");
+  const coordinator = await prisma.user.create({
+    data: {
+      name: "Coordenador",
+      username: "coordenador",
+      passwordHash: coordHash,
+      role: "coordinator",
+    },
+  });
+
+  const memberHash = await hashPassword("membro12345");
+  const member = await prisma.user.create({
+    data: {
+      name: "Responsável Demo",
+      username: "membro",
+      passwordHash: memberHash,
+      role: "member",
+    },
+  });
+
+  const extraUsers = [];
+  for (let i = 1; i <= 5; i++) {
+    const user = await prisma.user.create({
       data: {
-        name: "Coordenador",
-        username: "coordenador",
-        passwordHash: await hashPassword("coord12345"),
-        role: "coordinator",
-      },
-    });
-    const member = await prisma.user.create({
-      data: {
-        name: "Responsável Demo",
-        username: "membro",
-        passwordHash: await hashPassword("membro12345"),
+        name: `Membro Equipe ${i}`,
+        username: `membro${i}`,
+        passwordHash: memberHash,
         role: "member",
       },
     });
-    console.log("Usuários de teste criados: coordenador/coord12345, membro/membro12345");
-
-    const existingColumns = await prisma.column.count();
-    if (existingColumns === 0) {
-      const todo = await prisma.column.create({
-        data: { title: "A Fazer", color: "#71717a", order: 0 },
-      });
-      const doing = await prisma.column.create({
-        data: { title: "Fazendo", color: "#f59e0b", order: 1 },
-      });
-      const done = await prisma.column.create({
-        data: { title: "Concluído", color: "#10b981", order: 2, isDone: true },
-      });
-
-      const inThreeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      await prisma.task.createMany({
-        data: [
-          {
-            title: "Planejar sprint",
-            description: "Definir escopo e prioridades da próxima sprint.",
-            assigneeId: coordinator.id,
-            dueDate: inThreeDays,
-            columnId: todo.id,
-            order: 0,
-          },
-          {
-            title: "Revisar layout do dashboard",
-            description: "Ajustar espaçamentos e cores conforme o design.",
-            assigneeId: member.id,
-            columnId: todo.id,
-            order: 1,
-          },
-          {
-            title: "Implementar autenticação",
-            description: "Login com usuário e senha próprios.",
-            assigneeId: coordinator.id,
-            dueDate: yesterday,
-            columnId: doing.id,
-            order: 0,
-          },
-          {
-            title: "Configurar CI/CD",
-            description: "Pipeline de build e deploy automático.",
-            assigneeId: member.id,
-            columnId: done.id,
-            order: 0,
-          },
-        ],
-      });
-      console.log("Colunas e tarefas de exemplo criadas.");
-    }
-  } else {
-    console.log("Usuários já existem, pulando seed.");
+    extraUsers.push(user);
   }
+
+  const users = [coordinator, member, ...extraUsers];
+
+  console.log("Usuários criados com sucesso.");
+
+  const todo = await prisma.column.create({
+    data: { title: "A Fazer", color: "#71717a", order: 0 },
+  });
+  const doing = await prisma.column.create({
+    data: { title: "Fazendo", color: "#f59e0b", order: 1 },
+  });
+  const done = await prisma.column.create({
+    data: { title: "Concluído", color: "#10b981", order: 2, isDone: true },
+  });
+
+  const columns = [todo, doing, done];
+  const now = new Date();
+  
+  const tasks = [];
+  for (let i = 1; i <= 30; i++) {
+    // Espalhar vencimentos pelo mês (de -5 dias até +25 dias a partir de hoje)
+    const dueDate = new Date(now);
+    dueDate.setDate(now.getDate() + (i - 5));
+    
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomColumn = columns[Math.floor(Math.random() * columns.length)];
+    
+    // Adicionar um pouco de markdown para testar
+    const description = `Descrição detalhada da tarefa ${i}.\n\n- Ponto 1\n- Ponto 2\n\n**Importante:** Revisar antes de concluir.`;
+    
+    tasks.push({
+      title: `Tarefa ${i} do Mês`,
+      description,
+      assigneeId: randomUser.id,
+      dueDate,
+      columnId: randomColumn.id,
+      order: i,
+    });
+  }
+
+  await prisma.task.createMany({ data: tasks });
+  console.log("Colunas e 30 tarefas do mês criadas.");
 }
 
 main()

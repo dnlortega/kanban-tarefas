@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
+import confetti from "canvas-confetti";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,14 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
         requestedBy: name.trim() || undefined,
       });
       setQueue((q) => [...q, track]);
+      
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: { y: 0.8 },
+        colors: ["#ec4899", "#d946ef", "#a855f7", "#6366f1"],
+      });
+
       toast.success("Música adicionada à fila!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao pedir música.");

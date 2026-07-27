@@ -1,6 +1,5 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import confetti from "canvas-confetti";
 import Link from "next/link";
 import {
   DndContext,
@@ -272,13 +271,31 @@ export function KanbanBoard({
       }
     }
 
+    let isTaskDone = false;
+    const overCol = columns.find((c) => c.id === overColumnId);
+
+    if (activeColumnId !== overColumnId) {
+      if (overCol?.isDone) {
+        isTaskDone = true;
+      }
+    }
+
     const affectedColumnIds = new Set([activeColumnId, overColumnId]);
     const payload = finalColumns
       .filter((c) => affectedColumnIds.has(c.id))
       .map((c) => ({ columnId: c.id, taskIds: c.tasks.map((t) => t.id) }));
 
     startTransition(() => {
-      syncColumnsOrder(payload).catch(() => {
+      syncColumnsOrder(payload).then(() => {
+        if (isTaskDone) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#2563eb", "#3b82f6", "#60a5fa", "#10b981", "#34d399"],
+          });
+        }
+      }).catch(() => {
         toast.error("Erro ao salvar a nova ordem");
       });
     });
@@ -328,7 +345,17 @@ export function KanbanBoard({
         })
       );
       startTransition(() => {
-        updateTask(id, input).catch(() => toast.error("Erro ao atualizar tarefa"));
+        updateTask(id, input).then(() => {
+          const overCol = columns.find((c) => c.id === input.columnId);
+          if (editingTask.columnId !== input.columnId && overCol?.isDone) {
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ["#2563eb", "#3b82f6", "#60a5fa", "#10b981", "#34d399"],
+            });
+          }
+        }).catch(() => toast.error("Erro ao atualizar tarefa"));
       });
       toast.success("Tarefa atualizada");
     } else {
