@@ -85,6 +85,23 @@ function TaskCardImpl({
           className={cn("min-w-0 flex-1", !canManage && onView && "cursor-pointer")}
           onClick={!canManage ? () => onView?.(task) : undefined}
         >
+          {task.labels?.length > 0 && (
+            <div className="mb-1.5 flex flex-wrap gap-1">
+              {task.labels.map((label) => (
+                <span
+                  key={label.id}
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border"
+                  style={{ 
+                    backgroundColor: `${label.color}15`, 
+                    color: label.color,
+                    borderColor: `${label.color}30`
+                  }}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
+          )}
           <p className="truncate text-sm font-medium leading-tight">
             {task.title}
           </p>

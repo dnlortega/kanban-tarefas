@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { getBoardState, getTitleSuggestions } from "@/lib/actions/tasks";
+import { getLabels } from "@/lib/actions/labels";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import type { Label } from "@/types/task";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,7 @@ export default async function KanbanPage() {
   let columns = [];
   let titleSuggestions: string[] = [];
   let assignableUsers: { id: string; name: string }[] = [];
+  let availableLabels: Label[] = [];
 
   try {
     const results = await Promise.all([
@@ -25,10 +28,12 @@ export default async function KanbanPage() {
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),
+      getLabels(),
     ]);
     columns = results[0];
     titleSuggestions = results[1];
     assignableUsers = results[2];
+    availableLabels = results[3];
   } catch (error) {
     console.error("Failed to load kanban data:", error);
     return (
@@ -50,6 +55,7 @@ export default async function KanbanPage() {
           initialColumns={columns}
           titleSuggestions={titleSuggestions}
           assignableUsers={assignableUsers}
+          availableLabels={availableLabels}
           currentUserId={currentUser.id}
           isCoordinator={currentUser.role === "coordinator"}
         />

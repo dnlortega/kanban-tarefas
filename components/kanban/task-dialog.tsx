@@ -37,7 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, formatDate } from "@/lib/utils";
-import type { Column, Task, TaskAssignee, TaskInput } from "@/types/task";
+import type { Column, Task, TaskAssignee, TaskInput, Label } from "@/types/task";
 
 const UNASSIGNED = "__unassigned__";
 
@@ -48,6 +48,7 @@ interface TaskDialogProps {
   defaultColumnId: string;
   columns: Column[];
   assignableUsers: TaskAssignee[];
+  availableLabels: Label[];
   titleSuggestions: string[];
   onSubmit: (input: TaskInput) => void;
 }
@@ -59,6 +60,7 @@ export function TaskDialog({
   defaultColumnId,
   columns,
   assignableUsers,
+  availableLabels,
   titleSuggestions,
   onSubmit,
 }: TaskDialogProps) {
@@ -82,6 +84,7 @@ export function TaskDialog({
             defaultColumnId={defaultColumnId}
             columns={columns}
             assignableUsers={assignableUsers}
+            availableLabels={availableLabels}
             titleSuggestions={titleSuggestions}
             isEditing={isEditing}
             onCancel={() => onOpenChange(false)}
@@ -101,6 +104,7 @@ interface TaskFormProps {
   defaultColumnId: string;
   columns: Column[];
   assignableUsers: TaskAssignee[];
+  availableLabels: Label[];
   titleSuggestions: string[];
   isEditing: boolean;
   onCancel: () => void;
@@ -112,6 +116,7 @@ function TaskForm({
   defaultColumnId,
   columns,
   assignableUsers,
+  availableLabels,
   titleSuggestions,
   isEditing,
   onCancel,
@@ -126,6 +131,9 @@ function TaskForm({
   );
   const [dueDatePopoverOpen, setDueDatePopoverOpen] = useState(false);
   const [columnId, setColumnId] = useState(task?.columnId ?? defaultColumnId);
+  const [labelIds, setLabelIds] = useState<string[]>(
+    task?.labels?.map((l) => l.id) ?? []
+  );
 
   const canSubmit = title.trim().length > 0;
 
@@ -138,6 +146,7 @@ function TaskForm({
       assigneeId: assigneeId === UNASSIGNED ? undefined : assigneeId,
       dueDate: dueDate ? dueDate.toISOString() : undefined,
       columnId,
+      labelIds,
     });
   }
 
@@ -259,6 +268,55 @@ function TaskForm({
                 />
               </PopoverContent>
             </Popover>
+          </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>Etiquetas</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {availableLabels.map((label) => {
+              const isSelected = labelIds.includes(label.id);
+              return (
+                <button
+                  key={label.id}
+                  type="button"
+                  onClick={() => {
+                    setLabelIds((prev) => 
+                      isSelected ? prev.filter((id) => id !== label.id) : [...prev, label.id]
+                    );
+                  }}
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    isSelected ? "ring-2 ring-ring ring-offset-2 ring-offset-background" : "hover:bg-muted/50 opacity-60 hover:opacity-100"
+                  )}
+                  style={{ 
+                    backgroundColor: isSelected ? `${label.color}20` : "transparent", 
+                    color: isSelected ? label.color : "inherit",
+                    borderColor: isSelected ? `${label.color}50` : "var(--border)"
+                  }}
+                >
+                  {label.name}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border border-dashed hover:bg-muted/50 transition-colors opacity-60 hover:opacity-100 text-muted-foreground"
+              onClick={() => {
+                const name = prompt("Nome da nova etiqueta:");
+                if (!name) return;
+                const colors = ["#ef4444", "#f97316", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                fetch("/api/labels", {
+                  method: "POST",
+                  body: JSON.stringify({ name, color: randomColor })
+                }).then(() => window.location.reload());
+              }}
+            >
+              <Plus className="size-3" />
+              Nova
+            </button>
           </div>
         </div>
 

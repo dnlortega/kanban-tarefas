@@ -11,6 +11,12 @@ export interface TaskAssignee {
   name: string;
 }
 
+export interface Label {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -19,6 +25,7 @@ export interface Task {
   dueDate: string | null;
   order: number;
   columnId: string;
+  labels: Label[];
   createdAt: string;
   updatedAt: string;
 }
@@ -33,4 +40,5 @@ export interface TaskInput {
   assigneeId?: string;
   dueDate?: string;
   columnId: string;
+  labelIds?: string[];
 }

@@ -12,7 +12,10 @@ export async function getBoardState(): Promise<ColumnWithTasks[]> {
     include: {
       tasks: {
         orderBy: { order: "asc" },
-        include: { assignee: { select: { id: true, name: true } } },
+        include: { 
+          assignee: { select: { id: true, name: true } },
+          labels: true
+        },
       },
     },
   });
@@ -28,6 +31,7 @@ export async function getBoardState(): Promise<ColumnWithTasks[]> {
       title: task.title,
       description: task.description,
       assignee: task.assignee,
+      labels: task.labels,
       dueDate: task.dueDate ? task.dueDate.toISOString() : null,
       order: task.order,
       columnId: task.columnId,
@@ -53,6 +57,9 @@ export async function createTask(input: TaskInput) {
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
       columnId: input.columnId,
       order: last ? last.order + 1 : 0,
+      labels: {
+        connect: input.labelIds?.map(id => ({ id })) || []
+      }
     },
   });
 
@@ -71,6 +78,9 @@ export async function updateTask(id: string, input: TaskInput) {
       description: input.description || null,
       assigneeId: input.assigneeId || null,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
+      labels: {
+        set: input.labelIds?.map(id => ({ id })) || []
+      }
     },
   });
 
@@ -242,4 +252,32 @@ export async function getTitleSuggestions(): Promise<string[]> {
     orderBy: { createdAt: "desc" },
   });
   return tasks.map((t) => t.title);
+}
+
+export async function getTaskComments(taskId: string) {
+  const comments = await prisma.comment.findMany({
+    where: { taskId },
+    include: { author: { select: { id: true, name: true, avatarUrl: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  return comments.map((c) => ({
+    id: c.id,
+    content: c.content,
+    createdAt: c.createdAt.toISOString(),
+    author: c.author,
+  }));
+}
+
+export async function addComment(taskId: string, content: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Não autenticado");
+  
+  await prisma.comment.create({
+    data: {
+      content,
+      taskId,
+      authorId: user.id,
+    },
+  });
+  revalidatePath("/");
 }

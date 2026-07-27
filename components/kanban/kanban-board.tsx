@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import confetti from "canvas-confetti";
 import Link from "next/link";
@@ -44,12 +46,13 @@ import {
   updateTask,
 } from "@/lib/actions/tasks";
 import { isOverdue } from "@/lib/utils";
-import type { ColumnWithTasks, Task, TaskAssignee, TaskInput } from "@/types/task";
+import type { ColumnWithTasks, Task, TaskAssignee, TaskInput, Label } from "@/types/task";
 
 interface KanbanBoardProps {
   initialColumns: ColumnWithTasks[];
   titleSuggestions: string[];
   assignableUsers: TaskAssignee[];
+  availableLabels: Label[];
   currentUserId: string;
   isCoordinator: boolean;
 }
@@ -94,6 +97,7 @@ export function KanbanBoard({
   initialColumns,
   titleSuggestions,
   assignableUsers,
+  availableLabels,
   currentUserId,
   isCoordinator,
 }: KanbanBoardProps) {
@@ -611,6 +615,7 @@ export function KanbanBoard({
         defaultColumnId={dialogColumnId}
         columns={columns}
         assignableUsers={assignableUsers}
+        availableLabels={availableLabels}
         titleSuggestions={titleSuggestions}
         onSubmit={handleSubmit}
       />
