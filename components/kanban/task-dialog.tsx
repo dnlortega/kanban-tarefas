@@ -37,7 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, formatDate } from "@/lib/utils";
-import type { Column, Task, TaskAssignee, TaskInput, Label } from "@/types/task";
+import type { Column, Task, TaskAssignee, TaskInput, Label as LabelType } from "@/types/task";
 
 const UNASSIGNED = "__unassigned__";
 
@@ -48,7 +48,7 @@ interface TaskDialogProps {
   defaultColumnId: string;
   columns: Column[];
   assignableUsers: TaskAssignee[];
-  availableLabels: Label[];
+  availableLabels: LabelType[];
   titleSuggestions: string[];
   onSubmit: (input: TaskInput) => void;
 }
@@ -104,7 +104,7 @@ interface TaskFormProps {
   defaultColumnId: string;
   columns: Column[];
   assignableUsers: TaskAssignee[];
-  availableLabels: Label[];
+  availableLabels: LabelType[];
   titleSuggestions: string[];
   isEditing: boolean;
   onCancel: () => void;
