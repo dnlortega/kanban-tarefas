@@ -54,16 +54,16 @@ export async function login(
     const token = await createSessionToken({ userId: user.id });
     (await cookies()).set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" && process.env.VERCEL === "1",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
       path: "/",
     });
   } catch (err) {
     console.error("Erro no login:", err);
+    const detail = err instanceof Error ? err.message : String(err);
     return {
-      error:
-        "Não foi possível entrar agora (erro no servidor). Tente novamente em instantes.",
+      error: `Não foi possível entrar agora. Detalhe: ${detail}`,
     };
   }
 
@@ -113,15 +113,16 @@ export async function register(
     const token = await createSessionToken({ userId: user.id });
     (await cookies()).set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" && process.env.VERCEL === "1",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
       path: "/",
     });
   } catch (err) {
     console.error("Erro no cadastro:", err);
+    const detail = err instanceof Error ? err.message : String(err);
     return {
-      error: "Não foi possível cadastrar agora (erro no servidor). Tente novamente em instantes.",
+      error: `Não foi possível cadastrar agora. Detalhe: ${detail}`,
     };
   }
 

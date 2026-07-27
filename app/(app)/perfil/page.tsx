@@ -36,7 +36,7 @@ export default async function PerfilPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center space-x-6">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={currentUser.avatarUrl || ""} alt={currentUser.name} />
+                <AvatarImage src={/* currentUser.avatarUrl || */ ""} alt={currentUser.name} />
                 <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
               </Avatar>
               <div className="space-y-2 flex-1">
