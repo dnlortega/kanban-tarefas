@@ -1,6 +1,8 @@
 "use client";
 
 import { CalendarClock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import {
   Dialog,
@@ -42,9 +44,11 @@ export function TaskDetailDialog({
 
         <div className="flex flex-col gap-4 py-2">
           {task.description && (
-            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-              {task.description}
-            </p>
+            <div className="prose prose-sm max-w-none text-muted-foreground dark:prose-invert">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {task.description}
+              </ReactMarkdown>
+            </div>
           )}
 
           <div className="flex flex-wrap items-center gap-3 text-sm">

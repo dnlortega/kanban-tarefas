@@ -3,6 +3,8 @@
 import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { CalendarClock, GripVertical, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -87,9 +89,11 @@ function TaskCardImpl({
             {task.title}
           </p>
           {task.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-              {task.description}
-            </p>
+            <div className="mt-1 line-clamp-2 text-xs text-muted-foreground prose prose-xs dark:prose-invert">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {task.description}
+              </ReactMarkdown>
+            </div>
           )}
 
           {(task.assignee || task.dueDate) && (
