@@ -114,7 +114,7 @@ export function JukeboxPlayer({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
-  const playingIdRef = useRef<string | null>(initialPlaying?.id ?? null);
+  const playingRef = useRef<Track | null>(initialPlaying);
   const isDraggingRef = useRef(false);
   const repeatModeRef = useRef(repeatMode);
 
@@ -140,7 +140,7 @@ export function JukeboxPlayer({
       }
       return;
     }
-    const next = await advanceQueue(playingIdRef.current ?? undefined, repeatModeRef.current === "all");
+    const next = await advanceQueue(playingRef.current?.id ?? undefined, repeatModeRef.current === "all");
     setPlaying(next);
     const state = await getQueueState();
     setQueue(state.queued);
@@ -148,7 +148,7 @@ export function JukeboxPlayer({
   }, []);
 
   useEffect(() => {
-    playingIdRef.current = playing?.id ?? null;
+    playingRef.current = playing;
   }, [playing]);
 
   useEffect(() => {
@@ -166,10 +166,8 @@ export function JukeboxPlayer({
         playerVars: { autoplay: 1 },
         events: {
           onReady: () => {
-            if (playingIdRef.current && playerRef.current) {
-              const current = playingIdRef.current;
-              const track = current === initialPlaying?.id ? initialPlaying : null;
-              if (track) playerRef.current.loadVideoById(track.youtubeId);
+            if (playingRef.current && playerRef.current && typeof playerRef.current.loadVideoById === "function") {
+              playerRef.current.loadVideoById(playingRef.current.youtubeId);
             }
           },
           onStateChange: (event) => {
@@ -198,7 +196,7 @@ export function JukeboxPlayer({
   }, []);
 
   useEffect(() => {
-    if (playerRef.current && playing) {
+    if (playerRef.current && playing && typeof playerRef.current.loadVideoById === "function") {
       playerRef.current.loadVideoById(playing.youtubeId);
       setIsPlaying(true);
     }
