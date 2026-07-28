@@ -202,6 +202,13 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
                         }}>
                           SD (360p)
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.preventDefault();
+                          navigator.clipboard.writeText(`https://youtube.com/watch?v=${result.videoId}`);
+                          toast.success("Link copiado para a área de transferência!");
+                        }}>
+                          Copiar Link do Vídeo
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -296,6 +303,13 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
                       startDownload(`https://youtube.com/watch?v=${track.youtubeId}`, "mp4", "360p", track.title);
                     }}>
                       SD (360p)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => {
+                      e.preventDefault();
+                      navigator.clipboard.writeText(`https://youtube.com/watch?v=${track.youtubeId}`);
+                      toast.success("Link copiado para a área de transferência!");
+                    }}>
+                      Copiar Link do Vídeo
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

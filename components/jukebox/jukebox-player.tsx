@@ -452,6 +452,13 @@ export function JukeboxPlayer({
                         }}>
                           SD (360p)
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.preventDefault();
+                          navigator.clipboard.writeText(`https://youtube.com/watch?v=${playing.youtubeId}`);
+                          toast.success("Link copiado para a área de transferência!");
+                        }}>
+                          Copiar Link do Vídeo
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -691,6 +698,13 @@ function QueueItem({ track, index, onRemove, onDownload }: QueueItemProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onDownload("mp4", "360p"); }}>
                 SD (360p)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(`https://youtube.com/watch?v=${track.youtubeId}`);
+                toast.success("Link copiado para a área de transferência!");
+              }}>
+                Copiar Link do Vídeo
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
