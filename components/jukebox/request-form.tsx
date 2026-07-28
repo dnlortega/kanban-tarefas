@@ -3,21 +3,14 @@
 import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import confetti from "canvas-confetti";
-import { Download, Plus, Search, Trash2 } from "lucide-react";
+import { Link2, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { cn } from "@/lib/utils";
 import {
   getQueueState,
@@ -25,7 +18,7 @@ import {
   requestTrack,
   searchTracks,
 } from "@/lib/actions/jukebox";
-import { useDownloader } from "@/components/jukebox/use-downloader";
+
 import type { Track, YoutubeSearchResultWithBlock } from "@/types/jukebox";
 
 interface RequestFormProps {
@@ -42,7 +35,7 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
 
   const [playing, setPlaying] = useState(initialPlaying);
   const [queue, setQueue] = useState(initialQueue);
-  const { startDownload, DownloadDialog } = useDownloader();
+
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -163,54 +156,22 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
                   )}
                 </div>
                   <div className="flex items-center">
-                    <DropdownMenu>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" aria-label="Baixar">
-                              <Download className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>Baixar Música/Vídeo</TooltipContent>
-                      </Tooltip>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel>Áudio (MP3)</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={(e) => {
-                          e.preventDefault();
-                          startDownload(`https://youtube.com/watch?v=${result.videoId}`, "mp3", "high", result.title);
-                        }}>
-                          Alta Qualidade (Melhor Áudio)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => {
-                          e.preventDefault();
-                          startDownload(`https://youtube.com/watch?v=${result.videoId}`, "mp3", "low", result.title);
-                        }}>
-                          Baixa Qualidade (Mais rápido)
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Vídeo (MP4)</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={(e) => {
-                          e.preventDefault();
-                          startDownload(`https://youtube.com/watch?v=${result.videoId}`, "mp4", "720p", result.title);
-                        }}>
-                          HD (720p)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => {
-                          e.preventDefault();
-                          startDownload(`https://youtube.com/watch?v=${result.videoId}`, "mp4", "360p", result.title);
-                        }}>
-                          SD (360p)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => {
-                          e.preventDefault();
-                          navigator.clipboard.writeText(`https://youtube.com/watch?v=${result.videoId}`);
-                          toast.success("Link copiado para a área de transferência!");
-                        }}>
-                          Copiar Link do Vídeo
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          aria-label="Copiar Link"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`https://youtube.com/watch?v=${result.videoId}`);
+                            toast.success("Link copiado para a área de transferência!");
+                          }}
+                        >
+                          <Link2 className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copiar Link do Vídeo</TooltipContent>
+                    </Tooltip>
                   </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -265,54 +226,22 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
               <span className="text-xs text-muted-foreground">{index + 1}</span>
               <span className="min-w-0 flex-1 truncate">{track.title}</span>
               <div className="flex items-center gap-1">
-                <DropdownMenu>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon-sm" variant="ghost" aria-label="Baixar">
-                          <Download className="size-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>Baixar Música/Vídeo</TooltipContent>
-                  </Tooltip>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Áudio (MP3)</DropdownMenuLabel>
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      startDownload(`https://youtube.com/watch?v=${track.youtubeId}`, "mp3", "high", track.title);
-                    }}>
-                      Alta Qualidade
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      startDownload(`https://youtube.com/watch?v=${track.youtubeId}`, "mp3", "low", track.title);
-                    }}>
-                      Baixa Qualidade
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Vídeo (MP4)</DropdownMenuLabel>
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      startDownload(`https://youtube.com/watch?v=${track.youtubeId}`, "mp4", "720p", track.title);
-                    }}>
-                      HD (720p)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      startDownload(`https://youtube.com/watch?v=${track.youtubeId}`, "mp4", "360p", track.title);
-                    }}>
-                      SD (360p)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      navigator.clipboard.writeText(`https://youtube.com/watch?v=${track.youtubeId}`);
-                      toast.success("Link copiado para a área de transferência!");
-                    }}>
-                      Copiar Link do Vídeo
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="icon-sm" 
+                      variant="ghost" 
+                      aria-label="Copiar Link"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://youtube.com/watch?v=${track.youtubeId}`);
+                        toast.success("Link copiado para a área de transferência!");
+                      }}
+                    >
+                      <Link2 className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Copiar Link do Vídeo</TooltipContent>
+                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -336,7 +265,7 @@ export function RequestForm({ initialPlaying, initialQueue }: RequestFormProps) 
           )}
         </div>
       </div>
-      <DownloadDialog />
+
     </div>
   );
 }
