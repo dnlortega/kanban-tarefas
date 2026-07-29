@@ -33,9 +33,10 @@ import {
   Play,
   SkipBack,
   SkipForward,
-  Trash2,
   Link2,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
