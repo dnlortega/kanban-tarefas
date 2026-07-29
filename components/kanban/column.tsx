@@ -113,7 +113,12 @@ function ColumnImpl({
               onDelete={onDeleteTask}
               onView={onViewTask}
               canManage={isCoordinator}
-              dragDisabled={dragDisabled || task.assignee?.id !== currentUserId}
+              dragDisabled={
+                dragDisabled ||
+                (!isCoordinator &&
+                  task.assignee?.id !== currentUserId &&
+                  task.assignee !== null)
+              }
             />
           ))}
         </SortableContext>
